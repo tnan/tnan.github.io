@@ -5,453 +5,502 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Finance Calculator - Comparison</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* ===== Modern App Redesign — keeps all original structure & JS ===== */
+        :root {
+            --bg-1: #f4f6fb;
+            --bg-2: #e9edf6;
+            --surface: #ffffff;
+            --surface-2: #f6f8fc;
+            --surface-3: #eef1f8;
+            --border: #e4e8f1;
+            --border-2: #d9dfeb;
+            --ink: #1b2030;
+            --ink-soft: #515a6e;
+            --ink-mute: #8a93a6;
+            --accent: #4f46e5;
+            --accent-2: #6366f1;
+            --accent-strong: #4338ca;
+            --accent-tint: #eef0fe;
+            --good: #15803d;
+            --good-bg: #ecfdf3;
+            --good-border: #abefc6;
+            --good-bar: #22c55e;
+            --bad: #b42318;
+            --bad-bg: #fef3f2;
+            --bad-border: #fecdca;
+            --bad-bar: #f04438;
+            --mono: ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, Consolas, monospace;
+            --shadow-sm: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.04);
+            --shadow-md: 0 6px 16px rgba(16,24,40,.08), 0 2px 6px rgba(16,24,40,.05);
+            --shadow-lg: 0 18px 40px rgba(16,24,40,.12);
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, Helvetica, Arial, sans-serif;
+            background:
+                radial-gradient(1200px 500px at 100% -10%, #e7ecfb 0%, rgba(231,236,251,0) 60%),
+                linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+            background-attachment: fixed;
             min-height: 100vh;
-            padding: 15px;
-            color: #333;
+            padding: 18px 16px 60px;
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1320px; margin: 0 auto; }
 
+        /* ---------- App header bar ---------- */
         .header {
+            position: relative;
             text-align: center;
-            color: white;
-            margin-bottom: 30px;
+            color: #fff;
+            margin-bottom: 22px;
+            padding: 26px 22px;
+            border-radius: 18px;
+            background: linear-gradient(120deg, #4f46e5 0%, #6d5ef0 45%, #7c83ff 100%);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
         }
-
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 8px;
+        .header::after {
+            content: "";
+            position: absolute; inset: 0;
+            background: radial-gradient(700px 220px at 12% -40%, rgba(255,255,255,.35), rgba(255,255,255,0) 70%);
+            pointer-events: none;
         }
-
-        .header p {
-            font-size: 14px;
-            opacity: 0.9;
-        }
+        .header h1 { font-size: 26px; font-weight: 800; letter-spacing: -.3px; margin-bottom: 6px; position: relative; }
+        .header p { font-size: 13.5px; opacity: .92; position: relative; }
 
         .message {
-            background: #4caf50;
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            background: var(--good-bg);
+            color: var(--good);
+            border: 1px solid var(--good-border);
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-bottom: 18px;
             text-align: center;
+            font-weight: 600;
         }
 
+        /* ---------- Layout ---------- */
         .comparison-wrapper {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+        @media (min-width: 980px) {
+            .comparison-wrapper { grid-template-columns: 1fr 1fr; }
+            #method-inputs-wrapper.single-column { grid-template-columns: 1fr; max-width: 720px; margin-left: auto; margin-right: auto; }
+            .results-grid.single-column { grid-template-columns: 1fr; max-width: 720px; margin-left: auto; margin-right: auto; }
         }
 
-        @media (min-width: 768px) {
-            .comparison-wrapper {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            #method-inputs-wrapper.single-column {
-                grid-template-columns: 1fr;
-            }
-
-            .results-grid.single-column {
-                grid-template-columns: 1fr;
-            }
-        }
-
+        /* ---------- Cards ---------- */
         .card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: var(--shadow-sm);
         }
-
         .card-header {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 3px solid #667eea;
-            color: #667eea;
-        }
-
-        .form-group {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: -.2px;
             margin-bottom: 18px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        .form-group select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-            background: #fff;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .form-group select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .view-mode-select {
-            position: relative;
-        }
-
-        .view-mode-native {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .view-mode-trigger {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 14px;
-            background: #fff;
-            color: #333;
-            text-align: left;
-            cursor: pointer;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--ink);
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            gap: 10px;
+        }
+        .card-header::before {
+            content: "";
+            width: 10px; height: 10px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            box-shadow: 0 0 0 4px var(--accent-tint);
         }
 
-        .view-mode-trigger.placeholder {
-            color: #8a8a8a;
+        /* ---------- Form fields ---------- */
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 7px;
+            color: var(--ink-mute);
+            text-transform: uppercase;
+            letter-spacing: .6px;
         }
-
-        .view-mode-trigger:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .view-mode-caret {
-            color: #667eea;
-            font-size: 12px;
-            margin-left: 10px;
-        }
-
-        .view-mode-menu {
-            position: absolute;
-            top: calc(100% + 6px);
-            left: 0;
-            right: 0;
-            z-index: 50;
-            background: #fff;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            box-shadow: 0 12px 22px rgba(0, 0, 0, 0.12);
-            overflow: hidden;
-            display: none;
-        }
-
-        .view-mode-option {
-            padding: 12px;
-            font-size: 14px;
-            color: #333;
-            cursor: pointer;
+        .form-group input,
+        .form-group select {
             width: 100%;
-            user-select: none;
+            padding: 11px 13px;
+            border: 1.5px solid var(--border-2);
+            border-radius: 11px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--ink);
+            background: #fff;
+            transition: border-color .18s, box-shadow .18s, background .18s;
+        }
+        .form-group input:hover,
+        .form-group select:hover { border-color: #c4ccdb; }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(79,70,229,.14);
             background: #fff;
         }
-
-        .view-mode-option:hover,
-        .view-mode-option.active {
-            background: #dfe3e9;
-            color: #1f2a3a;
+        .form-group input[readonly] {
+            background: var(--surface-3);
+            color: var(--ink-soft);
+            border-style: dashed;
+            border-color: var(--border-2);
+            cursor: default;
         }
+        .form-group input[readonly]:focus { box-shadow: none; border-color: var(--border-2); }
 
-        .input-group {
+        .two-column, .input-group {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
-
-        .input-group .form-group {
-            margin-bottom: 18px;
+        @media (max-width: 480px) {
+            .two-column, .input-group { grid-template-columns: 1fr; }
         }
 
+        /* ---------- Grouped sub-sections (was inline orange/blue boxes) ---------- */
+        .group-box {
+            background: var(--surface-2) !important;
+            border: 1.5px solid var(--border) !important;
+            border-radius: 14px !important;
+        }
+        .group-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: .7px;
+            margin-bottom: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+        .group-label::before {
+            content: "";
+            width: 6px; height: 6px; border-radius: 2px;
+            background: var(--accent-2);
+        }
+
+        /* Phase wrappers (Lease / Finance-after-lease) */
+        .phase-box {
+            background: linear-gradient(180deg, #f3f1fe, #f6f8fc) !important;
+            border: 1.5px solid #e4e2fb !important;
+            border-radius: 16px !important;
+        }
+        .phase-label {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--accent-strong);
+            letter-spacing: .2px;
+            margin-bottom: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .phase-label::before {
+            content: "";
+            width: 16px; height: 16px; border-radius: 6px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        }
+
+        /* ---------- View-mode custom dropdown ---------- */
+        .view-mode-select { position: relative; }
+        .view-mode-native { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+        .view-mode-trigger {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--border-2);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            background: #fff;
+            color: var(--ink);
+            text-align: left;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: space-between;
+            transition: border-color .18s, box-shadow .18s;
+        }
+        .view-mode-trigger:hover { border-color: #c4ccdb; }
+        .view-mode-trigger.placeholder { color: var(--ink-mute); font-weight: 600; }
+        .view-mode-trigger:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(79,70,229,.14); }
+        .view-mode-caret { color: var(--accent); font-size: 11px; margin-left: 10px; }
+        .view-mode-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0; right: 0;
+            z-index: 50;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            display: none;
+            padding: 6px;
+        }
+        .view-mode-option {
+            padding: 11px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--ink-soft);
+            cursor: pointer;
+            border-radius: 9px;
+            user-select: none;
+        }
+        .view-mode-option:hover { background: var(--surface-2); color: var(--ink); }
+        .view-mode-option.active {
+            background: var(--accent-tint);
+            color: var(--accent-strong);
+            font-weight: 700;
+        }
+
+        /* ---------- Buttons ---------- */
         .button-group {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-top: 25px;
+            margin-top: 22px;
         }
-
         button {
-            padding: 14px;
+            font-family: inherit;
+            padding: 13px 16px;
             border: none;
-            border-radius: 6px;
+            border-radius: 12px;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: transform .12s, box-shadow .2s, background .2s, border-color .2s, color .2s;
         }
-
         .btn-calculate {
             grid-column: 1 / -1;
-            background: #667eea;
-            color: white;
-            padding: 16px;
-            font-size: 16px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            color: #fff;
+            padding: 15px;
+            font-size: 15px;
+            letter-spacing: .2px;
+            box-shadow: 0 8px 18px rgba(79,70,229,.28);
         }
-
-        .btn-calculate:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
+        .btn-calculate:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(79,70,229,.34); }
+        .btn-calculate:active { transform: translateY(0); }
         .btn-reset {
             grid-column: 1 / -1;
-            background: #f0f0f0;
-            color: #666;
+            background: #fff;
+            color: var(--ink-soft);
+            border: 1.5px solid var(--border-2);
         }
+        .btn-reset:hover { background: var(--surface-2); border-color: #c4ccdb; }
 
-        .btn-reset:hover {
-            background: #e0e0e0;
-        }
-
+        /* Add custom fee/discount */
         .btn-add-custom-fee {
-            background: #e7f1ff;
-            color: #2d5f9a;
             width: 100%;
-            margin-top: 8px;
+            margin-top: 10px;
+            background: var(--accent-tint);
+            color: var(--accent-strong);
+            border: 1.5px dashed #c3c0f6;
         }
+        .btn-add-custom-fee:hover { background: #e6e8fe; border-color: var(--accent-2); }
 
-        .btn-add-custom-fee:hover {
-            background: #d6e8ff;
+        /* Delete buttons inside custom rows (shares .btn-reset) */
+        .remove-custom-fee {
+            background: var(--bad-bg) !important;
+            color: var(--bad) !important;
+            border: 1.5px solid var(--bad-border) !important;
+            padding: 9px 12px !important;
+            font-size: 13px !important;
         }
+        .remove-custom-fee:hover { background: #fde7e5 !important; }
 
-        .results-section {
-            background: white;
+        .custom-fee-row {
+            background: #fff;
+            border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* ---------- Results ---------- */
+        .results-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: var(--shadow-md);
             margin-bottom: 30px;
         }
-
         .results-header {
             font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: #333;
+            font-weight: 800;
+            letter-spacing: -.2px;
+            margin-bottom: 6px;
+            color: var(--ink);
         }
-
-        .results-tools {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-            margin-bottom: 14px;
-        }
-
-        .results-tools p {
-            font-size: 12px;
-            color: #555;
-            margin: 0;
-        }
-
-        .results-tools-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .btn-save-edits {
-            background: #1b8f4a;
-            color: #fff;
-        }
-
-        .btn-clear-edits {
-            background: #f3f3f3;
-            color: #333;
-        }
+        .results-tools { margin-bottom: 16px; }
+        .results-tools p { font-size: 12px; color: var(--ink-mute); margin: 0; }
+        .results-tools-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
         .results-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 18px;
+            margin-bottom: 18px;
         }
-
-        @media (min-width: 768px) {
-            .results-grid {
-                grid-template-columns: 1fr 1fr;
-            }
+        @media (min-width: 980px) {
+            .results-grid { grid-template-columns: 1fr 1fr; }
         }
 
         .result-box {
-            background: #f9f9f9;
-            border-left: 5px solid #667eea;
-            padding: 15px;
-            border-radius: 6px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-left: 5px solid var(--accent);
+            padding: 18px;
+            border-radius: 14px;
         }
+        .result-box.better { background: var(--good-bg); border-color: var(--good-border); border-left-color: var(--good-bar); }
+        .result-box.worse  { background: var(--bad-bg);  border-color: var(--bad-border);  border-left-color: var(--bad-bar); }
 
-        .result-box.better {
-            background: #e8f5e9;
-            border-left-color: #4caf50;
-        }
-
-        .result-box.worse {
-            background: #ffebee;
-            border-left-color: #f44336;
+        .result-box-title {
+            font-weight: 800;
+            margin-bottom: 14px;
+            font-size: 15px;
+            color: var(--ink);
+            letter-spacing: -.2px;
         }
 
         .result-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .result-item:last-child {
+            align-items: baseline;
+            gap: 14px;
             margin-bottom: 0;
+            padding: 7px 0;
+            font-size: 13.5px;
+            border-bottom: 1px solid rgba(16,24,40,.06);
         }
-
-        .result-label {
-            color: #666;
-            font-weight: 500;
-        }
-
-        .result-value {
-            font-weight: 700;
-            color: #333;
-        }
-
-        .result-box.better .result-value {
-            color: #4caf50;
-        }
-
-        .result-box.worse .result-value {
-            color: #f44336;
-        }
+        .result-item:last-child { border-bottom: none; }
+        .result-label { color: var(--ink-soft); font-weight: 500; }
+        .result-value { font-weight: 700; color: var(--ink); font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .result-box.better .result-value { color: var(--good); }
+        .result-box.worse  .result-value { color: var(--bad); }
 
         .result-total {
-            font-size: 16px;
-            font-weight: 700;
-            padding-top: 10px;
-            border-top: 2px solid #ddd;
-            margin-top: 10px;
+            font-size: 15px;
+            font-weight: 800;
+            padding-top: 11px;
+            border-top: 2px solid var(--border-2);
+            margin-top: 8px;
+            border-bottom: none;
         }
-
-        .result-total .result-label,
-        .result-total .result-value {
-            font-weight: 700;
-        }
+        .result-total .result-label, .result-total .result-value { font-weight: 800; }
 
         .result-monthly-highlight {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 2px solid #c8ced8;
+            margin-top: 8px;
+            padding: 11px 12px;
+            border-top: none;
+            background: rgba(79,70,229,.07);
+            border: 1px solid rgba(79,70,229,.18);
+            border-radius: 10px;
         }
-
         .result-monthly-highlight .result-label,
-        .result-monthly-highlight .result-value {
-            font-weight: 700;
-            color: #1f2a3a;
-        }
+        .result-monthly-highlight .result-value { font-weight: 800; color: var(--accent-strong); }
+        .result-box.better .result-monthly-highlight { background: rgba(34,197,94,.10); border-color: rgba(34,197,94,.28); }
+        .result-box.better .result-monthly-highlight .result-label,
+        .result-box.better .result-monthly-highlight .result-value { color: var(--good); }
+        .result-box.worse .result-monthly-highlight { background: rgba(240,68,56,.08); border-color: rgba(240,68,56,.25); }
+        .result-box.worse .result-monthly-highlight .result-label,
+        .result-box.worse .result-monthly-highlight .result-value { color: var(--bad); }
 
-        .result-cost-highlight .result-label,
-        .result-cost-highlight .result-value {
-            font-weight: 700;
-        }
+        .result-cost-highlight .result-label, .result-cost-highlight .result-value { font-weight: 800; }
 
-        .comparison-result {
-            background: #f0f4ff;
-            border: 2px solid #667eea;
-            border-radius: 8px;
-            padding: 18px;
-            text-align: center;
-            margin-top: 20px;
-        }
+        .custom-breakdown-item { padding: 4px 0 4px 12px !important; border-bottom: none; }
+        .custom-breakdown-item .result-label { color: var(--ink-mute) !important; font-size: 12px !important; }
+        .custom-breakdown-item .result-value { color: var(--accent) !important; font-weight: 600 !important; }
 
-        .comparison-result-title {
-            font-size: 12px;
-            color: #667eea;
-            font-weight: 600;
+        /* Result phase sub-boxes (Lease phase / Finance phase) */
+        .result-phase {
+            background: #fff !important;
+            border: 1px solid var(--border);
+            border-radius: 12px !important;
+            box-shadow: var(--shadow-sm);
+        }
+        .result-box.better .result-phase, .result-box.worse .result-phase { background: rgba(255,255,255,.7) !important; }
+        .result-phase-label {
+            font-weight: 800;
+            color: var(--accent-strong);
+            font-size: 11px;
+            letter-spacing: .7px;
             text-transform: uppercase;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            display: inline-flex; align-items: center; gap: 7px;
+        }
+        .result-phase-label::before {
+            content: ""; width: 6px; height: 6px; border-radius: 2px; background: var(--accent-2);
         }
 
+        /* "Monthly Payment Calculation" mini divider */
+        .calc-divider {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 2px solid var(--border-2);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            color: var(--ink-mute);
+        }
+
+        /* ---------- Comparison winner banner ---------- */
+        .comparison-result {
+            background: linear-gradient(135deg, #eef0fe 0%, #e7ecfb 100%);
+            border: 1.5px solid #d9dcff;
+            border-radius: 16px;
+            padding: 22px;
+            text-align: center;
+            margin-top: 18px;
+        }
+        .comparison-result-title {
+            font-size: 11px;
+            color: var(--accent);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
         .comparison-result-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: #667eea;
-            margin-bottom: 8px;
+            display: inline-block;
+            font-size: 22px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -.2px;
+            margin-bottom: 10px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            box-shadow: 0 8px 18px rgba(79,70,229,.28);
         }
+        .comparison-result-text { font-size: 14px; color: var(--ink-soft); font-weight: 700; font-family: var(--mono); }
 
-        .comparison-result-text {
-            font-size: 12px;
-            color: #666;
-        }
-
-        .two-column {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
+        /* ---------- Responsive tweaks ---------- */
         @media (max-width: 480px) {
-            .two-column {
-                grid-template-columns: 1fr;
-            }
-
-            .header h1 {
-                font-size: 22px;
-            }
-
-            .card-header {
-                font-size: 16px;
-            }
-
-            .comparison-result-value {
-                font-size: 20px;
-            }
+            .header h1 { font-size: 21px; }
+            .card { padding: 16px; }
+            .results-section { padding: 16px; }
+            .comparison-result-value { font-size: 18px; }
         }
+
     </style>
 </head>
 <body>
@@ -461,7 +510,7 @@
             <p>Compare Finance Only vs Lease Then Finance</p>
         </div>
 
-        <form id="comparison-form" onsubmit="return false;">
+        <form action="javascript:void(0);" id="comparison-form">
             <div class="card" style="margin-bottom: 20px;">
                 <div class="card-header">Display Method</div>
                 <div class="form-group" style="margin-bottom: 0;">
@@ -508,8 +557,8 @@
                 <div class="card" id="finance-method-card">
                     <div class="card-header">Finance Only</div>
 
-                    <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                        <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Term Inputs</div>
+                    <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                        <div class="group-label">Term Inputs</div>
                         <input type="hidden" id="finance_term_mode" name="finance_term_mode" value="months">
                         <div class="two-column">
                             <div class="form-group">
@@ -523,8 +572,8 @@
                         </div>
                     </div>
 
-                    <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                        <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Finance Rate Inputs</div>
+                    <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                        <div class="group-label">Finance Rate Inputs</div>
                         <input type="hidden" id="finance_rate_mode" name="finance_rate_mode" value="apr">
                         <div class="two-column">
                             <div class="form-group">
@@ -538,8 +587,8 @@
                         </div>
                     </div>
 
-                    <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                        <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Tax Inputs</div>
+                    <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                        <div class="group-label">Tax Inputs</div>
                         <input type="hidden" id="finance_tax_mode" name="finance_tax_mode" value="rate">
                         <div class="two-column">
                             <div class="form-group">
@@ -548,13 +597,13 @@
                             </div>
                             <div class="form-group">
                                 <label for="finance_tax_amount">Tax Amount ($)</label>
-                                <input type="number" id="finance_tax_amount" name="finance_tax_amount" value="0.00" step="0.01" min="0" required>
+                                <input type="number" id="finance_tax_amount" name="finance_tax_amount" value="2400.00" step="0.01" min="0" required>
                             </div>
                         </div>
                     </div>
 
-                    <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 0;">
-                        <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Cash Down Equivalents</div>
+                    <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 0;">
+                        <div class="group-label">Cash Down Equivalents</div>
                         <div class="form-group">
                             <label for="cash_down">Cash Down ($)</label>
                             <input type="number" id="cash_down" name="cash_down" value="0" step="0.01" min="0" required>
@@ -571,8 +620,8 @@
                         </div>
                     </div>
 
-                    <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-top: 12px; margin-bottom: 0;">
-                        <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Other Fees</div>
+                    <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-top: 12px; margin-bottom: 0;">
+                        <div class="group-label">Other Fees</div>
                         <div class="form-group">
                             <label for="other_fees">Total Custom Fees ($)</label>
                             <input type="number" id="other_fees" name="other_fees" value="0.00" step="0.01" min="0" readonly aria-readonly="true">
@@ -584,9 +633,9 @@
 
                     </div>
 
-                    <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-top: 12px; margin-bottom: 0;">
+                    <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-top: 12px; margin-bottom: 0;">
 
-                        <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Other Discounts</div>
+                        <div class="group-label">Other Discounts</div>
                         <div class="form-group">
                             <label for="other_discounts">Total Custom Discounts ($)</label>
                             <input type="number" id="other_discounts" name="other_discounts" value="0.00" step="0.01" min="0" readonly aria-readonly="true">
@@ -602,11 +651,11 @@
                 <div class="card" id="lease-then-finance-method-card">
                     <div class="card-header" id="lease-method-card-title">Lease Then Finance</div>
 
-                    <div style="background: #f7f8ff; border: 1px solid #dfe5ff; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
-                        <div style="font-size: 12px; font-weight: 700; color: #667eea; margin-bottom: 8px;">Phase 1: Lease Term Inputs</div>
+                    <div class="phase-box" style="background: #f7f8ff; border: 1px solid #dfe5ff; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+                        <div class="phase-label">Phase 1: Lease Term Inputs</div>
 
-                        <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                            <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Term Inputs</div>
+                        <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                            <div class="group-label">Term Inputs</div>
                             <input type="hidden" id="lease_term_mode" name="lease_term_mode" value="months">
                             <div class="two-column">
                                 <div class="form-group">
@@ -620,8 +669,8 @@
                             </div>
                         </div>
 
-                        <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                            <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Lease Rate Inputs</div>
+                        <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                            <div class="group-label">Lease Rate Inputs</div>
                             <div class="two-column">
                                 <div class="form-group">
                                     <label for="lease_apr">Lease APR (%)</label>
@@ -638,8 +687,8 @@
                         <input type="hidden" id="residual_mode" name="residual_mode" value="percent">
                         <input type="hidden" id="lease_tax_mode" name="lease_tax_mode" value="rate">
 
-                        <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                            <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Residual Value Inputs</div>
+                        <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                            <div class="group-label">Residual Value Inputs</div>
                             <div class="two-column">
                                 <div class="form-group">
                                     <label for="residual_percentage">Residual Value (%)</label>
@@ -652,8 +701,8 @@
                             </div>
                         </div>
 
-                        <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                            <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Tax Inputs</div>
+                        <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                            <div class="group-label">Tax Inputs</div>
                             <div class="two-column">
                                 <div class="form-group">
                                     <label for="lease_tax_rate">Tax Rate (%)</label>
@@ -661,13 +710,13 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="lease_tax_amount">Tax Amount ($)</label>
-                                    <input type="number" id="lease_tax_amount" name="lease_tax_amount" value="0.00" step="0.01" min="0" required>
+                                    <input type="number" id="lease_tax_amount" name="lease_tax_amount" value="2400.00" step="0.01" min="0" required>
                                 </div>
                             </div>
                         </div>
 
-                        <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                            <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Mileage Inputs</div>
+                        <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                            <div class="group-label">Mileage Inputs</div>
                             <div class="two-column">
                                 <div class="form-group">
                                     <label for="lease_annual_mileage">Annual Mileage (mi)</label>
@@ -681,8 +730,8 @@
                             </div>
                         </div>
 
-                        <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 0;">
-                            <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Lease Cash Down Equivalents</div>
+                        <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 0;">
+                            <div class="group-label">Lease Cash Down Equivalents</div>
                             <div class="form-group">
                                 <label for="lease_cash_down">Lease Cash Down ($)</label>
                                 <input type="number" id="lease_cash_down" name="lease_cash_down" value="0" step="0.01" min="0" required>
@@ -699,8 +748,8 @@
                             </div>
                         </div>
 
-                        <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-top: 12px; margin-bottom: 0;">
-                            <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Lease Other Fees</div>
+                        <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-top: 12px; margin-bottom: 0;">
+                            <div class="group-label">Lease Other Fees</div>
                             <div class="form-group">
                                 <label for="lease_other_fees">Total Custom Fees ($)</label>
                                 <input type="number" id="lease_other_fees" name="lease_other_fees" value="0.00" step="0.01" min="0" readonly aria-readonly="true">
@@ -711,8 +760,8 @@
                             <button type="button" class="btn-add-custom-fee add-custom-fee" onclick="window.addCustomFeeRowAction('lease-custom-fees-container', 'lease_custom_fee_label[]', 'lease_custom_fee_amount[]')" data-target="lease-custom-fees-container" data-label-name="lease_custom_fee_label[]" data-amount-name="lease_custom_fee_amount[]">Create Custom Fee</button>
                         </div>
 
-                        <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-top: 12px; margin-bottom: 0;">
-                            <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Other Discounts</div>
+                        <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-top: 12px; margin-bottom: 0;">
+                            <div class="group-label">Other Discounts</div>
                             <div class="form-group">
                                 <label for="lease_other_discounts">Total Custom Discounts ($)</label>
                                 <input type="number" id="lease_other_discounts" name="lease_other_discounts" value="0.00" step="0.01" min="0" readonly aria-readonly="true">
@@ -724,14 +773,14 @@
                         </div>
                     </div>
 
-                    <div id="finance-after-lease-phase-input" style="background: #f7f8ff; border: 1px solid #dfe5ff; border-radius: 8px; padding: 12px; margin-bottom: 6px;">
-                        <div style="font-size: 12px; font-weight: 700; color: #667eea; margin-bottom: 8px;">Phase 2: Finance Term Inputs (After Lease)</div>
+                    <div id="finance-after-lease-phase-input" class="phase-box" style="background: #f7f8ff; border: 1px solid #dfe5ff; border-radius: 8px; padding: 12px; margin-bottom: 6px;">
+                        <div class="phase-label">Phase 2: Finance Term Inputs (After Lease)</div>
                         <input type="hidden" id="finance_after_lease_tax_mode" name="finance_after_lease_tax_mode" value="rate">
                         <input type="hidden" id="finance_after_lease_term_mode" name="finance_after_lease_term_mode" value="months">
                         <input type="hidden" id="finance_after_lease_rate_mode" name="finance_after_lease_rate_mode" value="apr">
 
-                        <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                            <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Term Inputs</div>
+                        <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                            <div class="group-label">Term Inputs</div>
                             <div class="two-column">
                                 <div class="form-group">
                                     <label for="finance_months_after_lease">Finance Term (months)</label>
@@ -744,8 +793,8 @@
                             </div>
                         </div>
 
-                        <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                            <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Finance Rate Inputs</div>
+                        <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                            <div class="group-label">Finance Rate Inputs</div>
                             <div class="two-column">
                                 <div class="form-group">
                                     <label for="finance_after_lease_apr">APR (%)</label>
@@ -758,8 +807,8 @@
                             </div>
                         </div>
 
-                        <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                            <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Finance Cash Down Equivalents</div>
+                        <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                            <div class="group-label">Finance Cash Down Equivalents</div>
                             <div class="form-group">
                                 <label for="finance_after_lease_cash_down">Finance Cash Down ($)</label>
                                 <input type="number" id="finance_after_lease_cash_down" name="finance_after_lease_cash_down" value="0" step="0.01" min="0" required>
@@ -776,8 +825,8 @@
                             </div>
                         </div>
 
-                        <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                            <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Tax Inputs</div>
+                        <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                            <div class="group-label">Tax Inputs</div>
                             <div class="two-column">
                                 <div class="form-group">
                                     <label for="finance_after_lease_tax_rate">Tax Rate (%)</label>
@@ -785,13 +834,13 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="finance_after_lease_tax_amount">Tax Amount ($)</label>
-                                    <input type="number" id="finance_after_lease_tax_amount" name="finance_after_lease_tax_amount" value="0.00" step="0.01" min="0" required>
+                                    <input type="number" id="finance_after_lease_tax_amount" name="finance_after_lease_tax_amount" value="1200.00" step="0.01" min="0" required>
                                 </div>
                             </div>
                         </div>
 
-                        <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 0;">
-                            <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Finance Other Fees</div>
+                        <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-bottom: 0;">
+                            <div class="group-label">Finance Other Fees</div>
                             <div class="form-group">
                                 <label for="finance_after_lease_other_fees">Total Custom Fees ($)</label>
                                 <input type="number" id="finance_after_lease_other_fees" name="finance_after_lease_other_fees" value="0.00" step="0.01" min="0" readonly aria-readonly="true">
@@ -803,8 +852,8 @@
 
                         </div>
 
-                        <div style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-top: 12px; margin-bottom: 0;">
-                            <div style="font-size: 12px; font-weight: 700; color: #cc6a00; margin-bottom: 8px;">Other Discounts</div>
+                        <div class="group-box" style="background: #fff8f2; border: 1px solid #ffd9b5; border-radius: 8px; padding: 12px; margin-top: 12px; margin-bottom: 0;">
+                            <div class="group-label">Other Discounts</div>
                             <div class="form-group">
                                 <label for="finance_after_lease_other_discounts">Total Custom Discounts ($)</label>
                                 <input type="number" id="finance_after_lease_other_discounts" name="finance_after_lease_other_discounts" value="0.00" step="0.01" min="0" readonly aria-readonly="true">
@@ -1065,8 +1114,8 @@
 
             <div class="results-grid">
                 <!-- Finance Only Results -->
-                <div class="result-box" id="finance-results-box">
-                    <div style="font-weight: 700; margin-bottom: 12px; font-size: 15px; color: #667eea;">Finance Only</div>
+                <div class="result-box worse" id="finance-results-box">
+                    <div class="result-box-title">Finance Only</div>
                     
                     <div class="result-item">
                         <span class="result-label">MSRP</span>
@@ -1084,12 +1133,12 @@
                         <span class="result-label">Other Fees Total</span>
                         <span class="result-value">$0.00</span>
                     </div>
-                    
+                    <div class="result-item custom-breakdown-item" style="margin-bottom: 4px; font-size: 12px; padding-left: 10px;"><span class="result-label" style="color: #8a8a8a; font-size: 12px; font-weight: 500;">No custom fees added</span><span class="result-value" style="color: #7fa0c7; font-weight: 600;">$0.00</span></div>
                     <div class="result-item">
                         <span class="result-label">Other Discounts Total</span>
                         <span class="result-value">$0.00</span>
                     </div>
-                    
+                    <div class="result-item custom-breakdown-item" style="margin-bottom: 4px; font-size: 12px; padding-left: 10px;"><span class="result-label" style="color: #8a8a8a; font-size: 12px; font-weight: 500;">No custom discounts added</span><span class="result-value" style="color: #7fa0c7; font-weight: 600;">$0.00</span></div>
                     <div class="result-item">
                         <span class="result-label">Principal to Finance</span>
                         <span class="result-value">$32,400.00</span>
@@ -1108,17 +1157,17 @@
                     </div>
                     <div class="result-item">
                         <span class="result-label">Total Paid (Payments)</span>
-                        <span class="result-value">$36,653.41</span>
+                        <span class="result-value">$37,132.66</span>
                     </div>
                     <div class="result-item">
                         <span class="result-label">Total Interest</span>
-                        <span class="result-value">$4,253.41</span>
+                        <span class="result-value">$4,732.66</span>
                     </div>
                     <div class="result-item result-total">
                         <span class="result-label">Total Cost</span>
-                        <span class="result-value">$36,653.41</span>
+                        <span class="result-value">$37,132.66</span>
                     </div>
-                    <div style="margin-top: 10px; padding-top: 8px; border-top: 2px solid #d0d0d0; font-size: 12px; font-weight: 700; color: #666;">Monthly Payment Calculation</div>
+                    <div class="calc-divider">Monthly Payment Calculation</div>
                     <div class="result-item" style="margin-top: 8px;">
                         <span class="result-label">Principal to Finance</span>
                         <span class="result-value">$32,400.00</span>
@@ -1137,20 +1186,20 @@
                     </div>
                     <div class="result-item">
                         <span class="result-label">Monthly Finance Charge</span>
-                        <span class="result-value">$70.89</span>
+                        <span class="result-value">$78.88</span>
                     </div>
                     <div class="result-item result-monthly-highlight">
                         <span class="result-label">Monthly Payment</span>
-                        <span class="result-value">$610.89</span>
+                        <span class="result-value">$618.88</span>
                     </div>
                 </div>
 
                 <!-- Lease Then Finance Results -->
-                <div class="result-box" id="lease-then-finance-results-box">
-                    <div id="lease-results-title" style="font-weight: 700; margin-bottom: 12px; font-size: 15px; color: #667eea;">Lease Then Finance</div>
+                <div class="result-box better" id="lease-then-finance-results-box">
+                    <div id="lease-results-title" class="result-box-title">Lease Then Finance</div>
                     
-                    <div id="lease-results-phase" style="background: #f0f0f0; padding: 10px; border-radius: 6px; margin-bottom: 12px;">
-                        <div style="font-weight: 600; color: #555; font-size: 13px; margin-bottom: 8px;">LEASE PHASE</div>
+                    <div id="lease-results-phase" class="result-phase" style="background: #f0f0f0; padding: 10px; border-radius: 6px; margin-bottom: 12px;">
+                        <div class="result-phase-label">LEASE PHASE</div>
                         <div class="result-item">
                             <span class="result-label">MSRP</span>
                             <span class="result-value">$30,000.00</span>
@@ -1189,7 +1238,7 @@
                         </div>
                         <div class="result-item">
                             <span class="result-label">Total Lease Payments</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$20,209.50</span>
                         </div>
                         <div class="result-item">
                             <span class="result-label">Lease Cash Down</span>
@@ -1199,45 +1248,45 @@
                             <span class="result-label">Other Fees Total</span>
                             <span class="result-value">$0.00</span>
                         </div>
-                        
+                        <div class="result-item custom-breakdown-item" style="margin-bottom: 4px; font-size: 12px; padding-left: 10px;"><span class="result-label" style="color: #8a8a8a; font-size: 12px; font-weight: 500;">No custom fees added</span><span class="result-value" style="color: #7fa0c7; font-weight: 600;">$0.00</span></div>
                         <div class="result-item">
                             <span class="result-label">Other Discounts Total</span>
                             <span class="result-value">$0.00</span>
                         </div>
-                        
+                        <div class="result-item custom-breakdown-item" style="margin-bottom: 4px; font-size: 12px; padding-left: 10px;"><span class="result-label" style="color: #8a8a8a; font-size: 12px; font-weight: 500;">No custom discounts added</span><span class="result-value" style="color: #7fa0c7; font-weight: 600;">$0.00</span></div>
                         <div class="result-item">
                             <span class="result-label">Due at Signing</span>
                             <span class="result-value">$0.00</span>
                         </div>
                         <div class="result-item result-cost-highlight" style="border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;">
                             <span class="result-label">Total Lease Cost</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$20,209.50</span>
                         </div>
-                        <div style="margin-top: 10px; padding-top: 8px; border-top: 2px solid #d0d0d0; font-size: 12px; font-weight: 700; color: #666;">Monthly Payment Calculation</div>
+                        <div class="calc-divider">Monthly Payment Calculation</div>
                         <div class="result-item" style="margin-top: 8px;">
                             <span class="result-label">Base Monthly Payment</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$519.79</span>
                         </div>
                         <div class="result-item">
                             <span class="result-label">Depreciation Fee</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$416.67</span>
                         </div>
                         <div class="result-item">
                             <span class="result-label">Rent Charge (Interest)</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$103.12</span>
                         </div>
                         <div class="result-item">
                             <span class="result-label">Monthly Tax</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$41.58</span>
                         </div>
                         <div class="result-item result-monthly-highlight">
                             <span class="result-label">Lease Monthly Payment</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$561.38</span>
                         </div>
                     </div>
 
-                    <div id="finance-after-lease-results-phase" style="background: #f0f0f0; padding: 10px; border-radius: 6px;">
-                        <div style="font-weight: 600; color: #555; font-size: 13px; margin-bottom: 8px;">FINANCE PHASE (After Lease)</div>
+                    <div id="finance-after-lease-results-phase" class="result-phase" style="background: #f0f0f0; padding: 10px; border-radius: 6px;">
+                        <div class="result-phase-label">FINANCE PHASE (After Lease)</div>
                         <div class="result-item">
                             <span class="result-label">Residual Value (%)</span>
                             <span class="result-value">50.00%</span>
@@ -1248,25 +1297,25 @@
                         </div>
                         <div class="result-item">
                             <span class="result-label">Sales Tax (8.00%)</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$1,200.00</span>
                         </div>
                         <div class="result-item">
                             <span class="result-label">Other Fees Total</span>
                             <span class="result-value">$0.00</span>
                         </div>
-                        
+                        <div class="result-item custom-breakdown-item" style="margin-bottom: 4px; font-size: 12px; padding-left: 10px;"><span class="result-label" style="color: #8a8a8a; font-size: 12px; font-weight: 500;">No custom fees added</span><span class="result-value" style="color: #7fa0c7; font-weight: 600;">$0.00</span></div>
                         <div class="result-item">
                             <span class="result-label">Other Discounts Total</span>
                             <span class="result-value">$0.00</span>
                         </div>
-                        
+                        <div class="result-item custom-breakdown-item" style="margin-bottom: 4px; font-size: 12px; padding-left: 10px;"><span class="result-label" style="color: #8a8a8a; font-size: 12px; font-weight: 500;">No custom discounts added</span><span class="result-value" style="color: #7fa0c7; font-weight: 600;">$0.00</span></div>
                         <div class="result-item">
                             <span class="result-label">Finance Cash Down</span>
                             <span class="result-value">$0.00</span>
                         </div>
                         <div class="result-item">
                             <span class="result-label">Principal to Finance</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$16,200.00</span>
                         </div>
                         <div class="result-item">
                             <span class="result-label">Finance Term APR</span>
@@ -1278,20 +1327,20 @@
                         </div>
                         <div class="result-item">
                             <span class="result-label">Total Finance Payments</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$18,566.33</span>
                         </div>
                         <div class="result-item">
                             <span class="result-label">Finance Phase Cash Out</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$18,566.33</span>
                         </div>
                         <div class="result-item result-cost-highlight" style="border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;">
                             <span class="result-label">Total Finance Cost</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$18,566.33</span>
                         </div>
-                        <div style="margin-top: 10px; padding-top: 8px; border-top: 2px solid #d0d0d0; font-size: 12px; font-weight: 700; color: #666;">Monthly Payment Calculation</div>
+                        <div class="calc-divider">Monthly Payment Calculation</div>
                         <div class="result-item" style="margin-top: 8px;">
                             <span class="result-label">Principal to Finance</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$16,200.00</span>
                         </div>
                         <div class="result-item">
                             <span class="result-label">Finance Term APR</span>
@@ -1303,15 +1352,15 @@
                         </div>
                         <div class="result-item">
                             <span class="result-label">Base Monthly Payment</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$270.00</span>
                         </div>
                         <div class="result-item">
                             <span class="result-label">Monthly Finance Charge</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$39.44</span>
                         </div>
                         <div class="result-item result-monthly-highlight">
                             <span class="result-label">Finance Monthly Payment</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$309.44</span>
                         </div>
                     </div>
 
@@ -1322,7 +1371,7 @@
                         </div>
                         <div class="result-item result-total">
                             <span class="result-label">Total Cost</span>
-                            <span class="result-value">$0.00</span>
+                            <span class="result-value">$38,775.83</span>
                         </div>
                     </div>
                 </div>
@@ -1331,7 +1380,7 @@
             <div class="comparison-result" id="comparison-result-panel">
                 <div class="comparison-result-title">Better Option</div>
                 <div id="better-option" class="comparison-result-value">Finance Only</div>
-                <div id="savings-text" class="comparison-result-text">Saves $0.00</div>
+                <div id="savings-text" class="comparison-result-text">Saves $1,643.17</div>
             </div>
         </div>
     </div>
@@ -2403,35 +2452,23 @@
             applyViewMode();
         })();
     </script>
-
     <script>
-        (function() {
+        (function () {
             var calcBtn = document.getElementById('calculate-btn');
             if (!calcBtn) return;
-            calcBtn.addEventListener('click', function() {
-                // Show results panel
-                var resultsPanel = document.getElementById('results-section-panel');
-                if (resultsPanel) resultsPanel.style.display = '';
-                // Trigger recalc by dispatching input on MSRP
-                var msrp = document.getElementById('msrp');
-                if (msrp) msrp.dispatchEvent(new Event('input', {bubbles: true}));
-                // Update result box classes based on comparison
-                setTimeout(function() {
-                    var betterEl = document.getElementById('better-option');
-                    var financeBox = document.getElementById('finance-results-box');
-                    var leaseBox = document.getElementById('lease-then-finance-results-box');
-                    if (betterEl && financeBox && leaseBox) {
-                        var isBetter = betterEl.textContent.trim() === 'Finance Only';
-                        financeBox.className = 'result-box ' + (isBetter ? 'better' : 'worse');
-                        leaseBox.className = 'result-box ' + (!isBetter ? 'better' : 'worse');
-                    }
-                }, 100);
-                // Scroll to results
+            calcBtn.addEventListener('click', function () {
+                // The calculator recalculates live on every input. Nudge a recalc
+                // by dispatching input events on the key driving fields.
+                ['msrp', 'finance_months', 'lease_months', 'finance_months_after_lease'].forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (el) el.dispatchEvent(new Event('input', { bubbles: true }));
+                });
                 var results = document.getElementById('results-section-panel');
-                if (results) results.scrollIntoView({behavior: 'smooth', block: 'start'});
+                if (results && results.style.display !== 'none') {
+                    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             });
         })();
     </script>
-
 </body>
 </html>
