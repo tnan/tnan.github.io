@@ -490,15 +490,22 @@
         .comparison-result-text { font-size: 14px; color: var(--ink-soft); font-weight: 700; font-family: var(--mono); }
 
         .amort-toggle {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 18px; height: 18px; margin-right: 8px; padding: 0;
-            border: 1.5px solid var(--accent); color: var(--accent);
-            background: #fff; border-radius: 6px;
-            font-size: 13px; font-weight: 800; line-height: 1;
-            cursor: pointer; vertical-align: middle;
-            transition: background .15s, color .15s;
+            display: inline-block;
+            width: 18px; height: 18px; margin-right: 8px;
+            padding: 0; box-sizing: border-box; font-size: 0;
+            border: 1.5px solid var(--accent);
+            background-color: #fff; background-repeat: no-repeat;
+            background-position: center center; background-size: 10px 10px;
+            border-radius: 6px; cursor: pointer; vertical-align: middle;
+            transition: background-color .15s;
         }
-        .amort-toggle:hover { background: var(--accent-tint); }
+        .amort-toggle[aria-expanded="false"] {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cline x1='5' y1='1' x2='5' y2='9' stroke='%234f46e5' stroke-width='1.6' stroke-linecap='round'/%3E%3Cline x1='1' y1='5' x2='9' y2='5' stroke='%234f46e5' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+        }
+        .amort-toggle[aria-expanded="true"] {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cline x1='1' y1='5' x2='9' y2='5' stroke='%234f46e5' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+        }
+        .amort-toggle:hover { background-color: var(--accent-tint); }
         .amort-toggle:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(79,70,229,.25); }
         .amort-schedule {
             margin: 6px 0 8px;
