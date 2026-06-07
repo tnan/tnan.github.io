@@ -51,6 +51,8 @@
   }
   .app{ position:relative; z-index:1; width:100%; min-height:100dvh; margin:0 auto;
     padding:clamp(12px,3vw,24px) 16px clamp(18px,3.4vw,30px);
+    padding-top: max(clamp(12px,3vw,24px), env(safe-area-inset-top, 0px));
+    padding-bottom: max(clamp(18px,3.4vw,30px), env(safe-area-inset-bottom, 0px));
     display:flex; flex-direction:column; align-items:center; gap:clamp(7px,1.4vw,10px); }
 
   header{ width:100%; max-width:520px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
@@ -798,7 +800,7 @@
     const ai=mode==='ai';
     mvL.innerHTML=(ai?'You':'P1')+' <b>'+m1+'</b>';
     mvT.innerHTML='<b>'+history.length+'</b> moves';
-    mvR.innerHTML='<b>'+m2+'</b> '+(ai?'AI':'P2');
+    mvR.innerHTML=(ai?'AI':'P2')+' <b>'+m2+'</b>';
   }
   function setLastMove(){
     slotEls.forEach(row=>row.forEach(s=>s.classList.remove('lastmove')));
