@@ -1,0 +1,1319 @@
+PROMPT: OMNIBOOK — The Ultimate All‑in‑One Browser Bookkeeping ERP
+
+0. ARCHITECTURE & FILE STRUCTURE (NON‑NEGOTIABLE)
+
+You will create exactly two files at the same folder level on the server:
+
+index.html — A single, self‑contained file exceeding 10,000 lines of HTML/CSS/JS. No external CDN dependencies (all libraries must be inlined or zero‑dependency vanilla JS/CSS). The app runs entirely client‑side.
+data.json — The external data persistence file. The app reads this file on load via fetch('./data.json') and writes back to it via a simulated save mechanism (since client‑side JS cannot overwrite server files directly, the app must offer:
+Auto‑download of updated data.json on every significant change (triggered via an anchor[download] blob).
+Manual "Save to Server" button that generates the JSON blob and prompts the user to replace the server file.
+localStorage hybrid mode: If data.json is missing or the fetch fails, bootstrap from localStorage and continue operating; on save, update both localStorage and offer the JSON download.
+Code Organization inside index.html (use these exact comment banners to separate sections):
+
+html
+
+Copy code
+1<!-- ===== SECTION 1: META & PWA MANIFEST ===== -->
+2<!-- ===== SECTION 2: DESIGN SYSTEM / CSS TOKENS / RESET ===== -->
+3<!-- ===== SECTION 3: INLINE SVG ICON SPRITE ===== -->
+4<!-- ===== SECTION 4: THIRD‑PARTY LIBRARIES (INLINED) ===== -->
+5<!-- ===== SECTION 5: DATA MODELS & SCHEMA ===== -->
+6<!-- ===== SECTION 6: STATE MANAGER & INDEXEDDB LAYER ===== -->
+7<!-- ===== SECTION 7: SERVICE WORKER (INLINE) ===== -->
+8<!-- ===== SECTION 8: UTILITY FUNCTIONS ===== -->
+9<!-- ===== SECTION 9: UI COMPONENT FACTORY ===== -->
+10<!-- ===== SECTION 10: AUTH & USER MANAGEMENT ===== -->
+11<!-- ===== SECTION 11: COMPANY & MULTI‑ENTITY ENGINE ===== -->
+12<!-- ===== SECTION 12: CHART OF ACCOUNTS ENGINE ===== -->
+13<!-- ===== SECTION 13: BANKING & RECONCILIATION ===== -->
+14<!-- ===== SECTION 14: TRANSACTION / JOURNAL ENGINE ===== -->
+15<!-- ===== SECTION 15: CONTACTS (CUSTOMERS/VENDORS) ===== -->
+16<!-- ===== SECTION 16: PRODUCTS & INVENTORY ===== -->
+17<!-- ===== SECTION 17: INVOICING & AR ===== -->
+18<!-- ===== SECTION 18: BILLS & AP ===== -->
+19<!-- ===== SECTION 19: BANK RULES & AUTOMATION ===== -->
+20<!-- ===== SECTION 20: BUDGETING & FORECASTING ===== -->
+21<!-- ===== SECTION 21: FIXED ASSETS & DEPRECIATION ===== -->
+22<!-- ===== SECTION 22: TAX ENGINE ===== -->
+23<!-- ===== SECTION 23: PAYROLL & EXPENSE CLAIMS ===== -->
+24<!-- ===== SECTION 24: PROJECTS & TIME TRACKING ===== -->
+25<!-- ===== SECTION 25: PURCHASE ORDERS & SALES ORDERS ===== -->
+26<!-- ===== SECTION 26: ADVANCED ACCOUNTING (ACCRUALS, ALLOCATIONS) ===== -->
+27<!-- ===== SECTION 27: REPORTING ENGINE & CHARTS ===== -->
+28<!-- ===== SECTION 28: DASHBOARD & WIDGETS ===== -->
+29<!-- ===== SECTION 29: SEARCH, COMMAND PALETTE & GLOBAL NAV ===== -->
+30<!-- ===== SECTION 30: DATA IMPORT / EXPORT / BACKUP ===== -->
+31<!-- ===== SECTION 31: NOTIFICATIONS & ACTIVITY FEED ===== -->
+32<!-- ===== SECTION 32: SETTINGS & ADMIN ===== -->
+33<!-- ===== SECTION 33: ONBOARDING & TOUR ENGINE ===== -->
+34<!-- ===== SECTION 34: APP INITIALIZATION & BOOT ===== -->
+1. DESIGN SYSTEM & UI SPECIFICATION (PIXEL‑PERFECT)
+
+1.1 Design Tokens
+
+Define CSS custom properties on :root. These are law.
+
+css
+
+Copy code
+1:root {
+2  /* Spacing Grid (4px base) */
+3  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;
+4  --space-4: 16px;  --space-5: 20px;  --space-6: 24px;
+5  --space-8: 32px;  --space-10: 40px; --space-12: 48px;
+6  --space-16: 64px;
+7
+8  /* Typography */
+9  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+10  --font-mono: "SF Mono", Monaco, "Cascadia Code", monospace;
+11  --text-xs: 11px;  --text-sm: 13px;  --text-base: 14px;
+12  --text-md: 15px;  --text-lg: 17px;  --text-xl: 20px;
+13  --text-2xl: 24px; --text-3xl: 30px; --text-4xl: 36px;
+14  --leading-none: 1; --leading-tight: 1.25; --leading-normal: 1.5;
+15  --weight-regular: 400; --weight-medium: 500; --weight-semibold: 600; --weight-bold: 700;
+16
+17  /* Colors — Light Mode (default) */
+18  --bg-body: #F3F4F6;
+19  --bg-surface: #FFFFFF;
+20  --bg-elevated: #FFFFFF;
+21  --bg-hover: #F9FAFB;
+22  --bg-active: #EFF6FF;
+23  --bg-overlay: rgba(0,0,0,0.45);
+24  --border-subtle: #E5E7EB;
+25  --border-default: #D1D5DB;
+26  --border-strong: #9CA3AF;
+27  --text-primary: #111827;
+28  --text-secondary: #4B5563;
+29  --text-tertiary: #9CA3AF;
+30  --text-disabled: #D1D5DB;
+31  --accent-primary: #2563EB;       /* Blue 600 */
+32  --accent-primary-hover: #1D4ED8; /* Blue 700 */
+33  --accent-primary-light: #DBEAFE; /* Blue 100 */
+34  --accent-success: #059669;
+35  --accent-success-bg: #D1FAE5;
+36  --accent-warning: #D97706;
+37  --accent-warning-bg: #FEF3C7;
+38  --accent-danger: #DC2626;
+39  --accent-danger-bg: #FEE2E2;
+40  --accent-info: #0891B2;
+41  --accent-info-bg: #CFFAFE;
+42
+43  /* Dark Mode */
+44  --dm-bg-body: #0F172A;
+45  --dm-bg-surface: #1E293B;
+46  --dm-bg-elevated: #334155;
+47  --dm-bg-hover: #27354F;
+48  --dm-text-primary: #F8FAFC;
+49  --dm-text-secondary: #CBD5E1;
+50  --dm-border-subtle: #334155;
+51  --dm-border-default: #475569;
+52
+53  /* Shadows (not too harsh) */
+54  --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.04);
+55  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
+56  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.03);
+57  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.08), 0 10px 10px -5px rgba(0,0,0,0.02);
+58
+59  /* Shapes */
+60  --radius-sm: 6px;
+61  --radius-md: 8px;
+62  --radius-lg: 12px;
+63  --radius-xl: 16px;
+64  --radius-full: 9999px;
+65
+66  /* Z‑Index Scale */
+67  --z-base: 0;
+68  --z-sticky: 10;
+69  --z-drawer: 40;
+70  --z-modal: 50;
+71  --z-popover: 60;
+72  --z-toast: 70;
+73  --z-tooltip: 80;
+74}
+1.2 Layout Rules
+
+Mobile‑first breakpoints:
+Base: 0–639px (single column, bottom nav, bottom sheets)
+sm: 640px+ (side nav appears, 2‑column layouts possible)
+md: 768px+ (tables become readable, modals instead of bottom sheets)
+lg: 1024px+ (full desktop layout, 3‑column dashboard, persistent sidebars)
+xl: 1280px+ (max container width 1280px, centered with auto margins)
+Touch targets: Minimum 48px × 48px for all interactive elements.
+Tap highlight: Remove default mobile tap highlight (-webkit-tap-highlight-color: transparent), replace with subtle active scale (transform: scale(0.98)).
+Safe areas: Respect env(safe-area-inset-*) for notched devices.
+1.3 Component Specifications
+
+Buttons:
+Primary: height: 40px, padding: 0 20px, border-radius: 8px, font-weight: 600, font-size: 14px, background: var(--accent-primary), color: white. Hover: brightness(1.1) + shadow-md. Active: scale(0.98).
+Secondary: background: white, border: 1px solid var(--border-default), color: var(--text-primary).
+Danger: background: var(--accent-danger), color: white.
+Ghost: background: transparent, hover bg-hover.
+Icon button: 40px × 40px, border-radius: 8px, centered 20×20 SVG icon.
+Inputs:
+height: 44px (mobile) / 40px (desktop), padding: 0 14px, border: 1px solid var(--border-default), border-radius: 8px, font-size: 15px (mobile) / 14px (desktop).
+Focus: border-color: var(--accent-primary), box-shadow: 0 0 0 3px var(--accent-primary-light).
+Placeholder: color: var(--text-tertiary).
+Disabled: background: var(--bg-hover), opacity: 0.6.
+Cards:
+background: var(--bg-surface), border-radius: 12px, padding: 20px, box-shadow: var(--shadow-sm), border: 1px solid var(--border-subtle).
+Tables:
+Header: font-size: 11px, text-transform: uppercase, letter-spacing: 0.05em, color: var(--text-secondary), font-weight: 600, background: transparent.
+Row: height: 56px, border-bottom: 1px solid var(--border-subtle). Hover: background: var(--bg-hover).
+Cell padding: 16px horizontal.
+Sticky header: position: sticky; top: 0; z-index: var(--z-sticky); backdrop-filter: blur(8px); background: rgba(255,255,255,0.85);
+Bottom Sheets (Mobile):
+Slide up from bottom, border-radius: 20px 20px 0 0, max‑height 90vh, handle bar at top (40px × 4px rounded, centered, muted color).
+Modals (Desktop):
+Centered, max-width: 560px (standard), 720px (large), 960px (xl), border-radius: 16px, shadow-xl. Backdrop: bg-overlay with backdrop-filter: blur(4px).
+Toasts:
+Bottom‑right desktop, bottom‑center mobile. padding: 14px 20px, radius-lg, shadow-lg. Auto‑dismiss 4s unless hovered.
+Badges/Tags:
+height: 24px, padding: 0 10px, radius-full, font-size: 12px, font-weight: 600.
+2. ENHANCED FEATURES (BEYOND ORIGINAL PROMPT)
+
+In addition to the original 20 sections, you must implement these new modules:
+
+2.1 Universal Searchable Dropdowns (CRITICAL)
+
+Every <select>, every account picker, every customer/vendor/product dropdown, every currency selector, every tax rate picker, every project/class/location dropdown — if the list has >5 items, it MUST be replaced with a custom searchable combobox.
+
+Behavioral Specification:
+
+Clicking the field opens a floating panel (not native <select>).
+Panel contains:
+Search input at the top, sticky, auto‑focused, placeholder "Search…"
+Virtual scroll list (if >50 items) for performance.
+Group headers if applicable (e.g., "Assets", "Liabilities").
+Keyboard navigation:
+↑/↓ arrows move highlight.
+Enter selects.
+Escape closes.
+Tab blurs and closes, keeping current selection.
+Filtering: Fuzzy search using fuse.js-like algorithm (implement lightweight version: split query by space, match each token against option text; score by token order proximity). Highlight matched characters in bold with color: var(--accent-primary).
+Recent selections: Show last 5 picked items at top under "Recent" when search is empty.
+Create new: If no match and user has permission, last option is + Create "Query" which opens the quick‑add modal.
+Multi‑select variant: Checkboxes inside dropdown, chips appear in input field, × to remove.
+Mobile: Full‑screen bottom sheet version of the dropdown.
+2.2 Command Palette (Ctrl+K / Cmd+K)
+
+Global modal overlay, triggered by Ctrl+K or tapping the search bar.
+Sections: Go to (pages), Recent (last 10 transactions), Actions (Create invoice, Add expense), Reports (quick‑run).
+Fuzzy search across all commands.
+↑/↓ to navigate, Enter to execute, Escape to close.
+2.3 Global Search (Ctrl+Shift+F)
+
+Search transactions, contacts, invoices, bills, products by keyword, amount, date, or reference number.
+Results grouped by entity type with icon, title, subtitle, and date.
+Clicking a result navigates directly to the record.
+2.4 Advanced Keyboard Shortcuts
+
+Implement an in‑app shortcut help (? key or Ctrl+/). Include:
+
+N = New Transaction
+I = New Invoice
+B = New Bill
+T = Transfer
+R = Run Reports
+S = Save current form
+/ = Focus global search
+Esc = Close modal / Cancel / Go back
+Ctrl+Enter = Submit any form
+Ctrl+Shift+D = Toggle dark mode
+2.5 Data Visualization (Inline Charts)
+
+Implement a lightweight chart engine using inline SVG (do NOT use external chart libraries unless inlined). Required charts:
+
+Line chart: Cash flow over time, P&L trend.
+Bar chart: Expenses by category, budget vs actual.
+Donut chart: Income breakdown, tax liability composition.
+Horizontal bar: AP/AR aging.
+Sparklines: Mini charts inside dashboard cards (trend over last 12 months). All charts must be responsive, animate on entry (stroke-dasharray trick for lines, scaleY for bars), and show a tooltip on hover with exact value.
+2.6 Purchase Orders (PO) & Sales Orders (SO)
+
+PO: Create PO from vendor → receive items partially or fully → auto‑generate bill upon full receipt. Statuses: Draft, Sent, Partially Received, Received, Closed, Cancelled.
+SO: Create SO from customer → fulfill/pick/pack/ship → auto‑generate invoice upon fulfillment. Statuses: Draft, Confirmed, Picked, Shipped, Invoiced, Closed.
+Both support line items, backorders, and linked workflow buttons.
+2.7 Payroll Simulation
+
+Employee list (name, title, salary/wage, tax ID, pay schedule).
+Pay run creation: select period → auto‑calculate gross pay, tax withholdings (federal/state simulated), deductions, net pay → post journal entry (Dr Salaries Expense, Cr Cash, Cr Tax Payable).
+Pay stub generation (printable).
+Payroll summary report.
+2.8 Time Tracking & Billable Hours
+
+Timer widget (start/stop) per project/task.
+Timesheet grid (week view, mobile: day view).
+Convert timesheet entries to invoice line items.
+Billable rate per user per project.
+Non‑billable vs billable hour reports.
+2.9 Expense Claims / Employee Reimbursement
+
+Employee submits expense claim (date, category, amount, receipt attachment, description).
+Manager approval workflow (Pending → Approved → Reimbursed).
+Reimbursement batch payment.
+2.10 Advanced Inventory
+
+Multiple warehouses/locations: Each product has quantity per warehouse.
+Transfer orders: Move stock between warehouses.
+Serial numbers & Lot/Batch tracking: Track individual units.
+Bill of Materials (BOM) / Assembly builds: Build finished goods from raw materials; auto‑post assembly journal entry.
+Landed costs: Allocate freight/insurance/duty to inventory cost.
+Stocktaking/Physical count: Count sheet → variance adjustment → auto‑post shrinkage.
+FIFO + Average Cost + LIFO: User chooses costing method per product.
+2.11 Loan & Credit Tracking
+
+Loan ledger (principal, interest rate, term, start date).
+Amortization schedule generator.
+Automatic split of payment into principal (liability reduction) and interest (expense).
+Current portion vs long‑term portion reporting.
+2.12 Lease Accounting (IFRS 16 / ASC 842 Lite)
+
+Right‑of‑Use asset and lease liability calculation.
+Monthly depreciation + interest expense split.
+Lease payment reconciliation.
+2.13 Subscription & Deferred Revenue Management
+
+Subscription plans (monthly, yearly, usage‑based).
+Automatic deferred revenue recognition (initial payment goes to liability, recognized monthly).
+Revenue recognition schedule report.
+2.14 Custom Fields Engine
+
+User can define unlimited custom fields on: Transactions, Customers, Vendors, Products, Invoices, Bills.
+Field types: Text, Number, Date, Dropdown, Checkbox, URL.
+Custom fields appear in forms, tables (optional column), and reports (filterable).
+2.15 Workflow Automation (Zapier‑style Builder)
+
+Visual trigger/action list (not drag‑drop, but form‑based):
+Triggers: Invoice created, Bill overdue, Transaction added, Inventory low, New customer added.
+Actions: Send notification (in‑app), Create task, Create journal entry, Update field, Apply bank rule.
+Conditions: AND/OR logic on field values.
+Execution log with timestamps.
+2.16 Multi‑Language (i18n) Foundation
+
+Central translation dictionary object supporting: English (default), Spanish, French, German, Portuguese, Chinese (Simplified), Japanese.
+All UI strings must be rendered via t('key') function.
+Date/number/currency formatting per locale (Intl.NumberFormat, Intl.DateTimeFormat).
+User can switch language in settings; persists to company preference.
+2.17 Collaboration & Comments
+
+Every transaction, invoice, bill, journal entry, contact, and product has an Activity Timeline.
+Users can add comments with @mentions (dropdown of users).
+System auto‑posts events: "Created by User", "Status changed to Paid", "Attachment added".
+Comments stored with timestamp and user ID.
+2.18 Advanced Approvals
+
+Configurable approval chains per document type.
+Example: Invoice > 20,000 requires Owner.
+Pending approvals inbox on dashboard.
+Approve/Reject with comment.
+2.19 Email Templates & Communications
+
+Rich text editor (contenteditable div with toolbar) for invoice emails, reminders, statements.
+Variables: {{customerName}}, {{invoiceNumber}}, {{amountDue}}, {{dueDate}}.
+Simulated "Send" opens mailto: link with pre‑filled subject/body + attachment note, AND logs the communication in the activity timeline.
+2.20 Document Generation
+
+PDF generation: Use html2canvas (inlined) or browser print‑to‑PDF with highly stylized @media print CSS.
+Templates: Modern, Classic, Minimalist invoice/quote designs selectable per company.
+Watermark support: "DRAFT", "PAID", "OVERDUE" diagonally across invoices.
+2.21 POS / Cash Register Mode
+
+Full‑screen sales interface for retail:
+Product grid with images (colored squares if no image).
+Barcode input field.
+Cart sidebar.
+Quick payment buttons (Cash, Card, Check).
+Auto‑generate receipt (transaction + invoice).
+Cash drawer tracking (denomination counts).
+2.22 Commission & Partner Tracking
+
+Sales rep field on invoices.
+Commission rules (% of sale, flat rate, tiered).
+Commission liability accrual and payout tracking.
+2.23 Trust Accounting / Retainers
+
+Trust/escrow bank accounts.
+Matter/client trust ledger.
+Auto‑notification when trust balance low.
+Invoice payment from trust balance option.
+2.24 Data Integrity & Diagnostics
+
+Health Check Dashboard:
+Orphaned journal lines (debits ≠ credits).
+Negative inventory alerts.
+Unlinked payment transactions.
+Duplicate invoice numbers.
+Unreconciled difference tracker per bank account.
+One‑click fix buttons where safe (e.g., delete orphaned lines).
+2.25 Advanced Currency & FX
+
+Historical exchange rate table (user inputs or simulates API).
+Revaluation journal entries: At month‑end, auto‑calculate unrealized gain/loss on foreign currency bank accounts/AP/AR.
+Hedging simulation: Track forward contracts.
+2.26 Environmental, Social, Governance (ESG) Lite
+
+Carbon footprint estimation per expense category (manual factors).
+Sustainability spend tracking report.
+3. DETAILED DATA MODELS (JSON SCHEMA)
+
+Your data.json must follow this exact schema. Use UUIDv4 strings for all IDs. Store dates as ISO strings (YYYY-MM-DD) and datetimes as full ISO.
+
+javascript
+
+Copy code
+1{
+2  "appVersion": "3.0.0",
+3  "lastSaved": "2024-01-15T10:00:00Z",
+4  "settings": {
+5    "theme": "light|dark|system",
+6    "dateFormat": "MM/DD/YYYY|DD/MM/YYYY|YYYY-MM-DD",
+7    "numberFormat": "1,234.56|1.234,56|1 234,56",
+8    "defaultCurrency": "USD",
+9    "autoBackup": true,
+10    "pinLock": { "enabled": false, "hash": null }
+11  },
+12  "users": [
+13    {
+14      "id": "uuid",
+15      "username": "admin",
+16      "passwordHash": "bcrypt-like-hash-simulated", // use simple SHA-256 + salt for simulation
+17      "role": "Owner|Admin|Bookkeeper|Viewer|Sales|Manager",
+18      "displayName": "John Doe",
+19      "email": "john@company.com",
+20      "avatar": "base64 or null",
+21      "activeCompanyId": "uuid",
+22      "lastLogin": "ISO",
+23      "preferences": { "language": "en", "dashboardLayout": [...] },
+24      "permissions": { // overrides if custom
+25        "canDeleteTransactions": true,
+26        "canManageUsers": false,
+27        "canClosePeriods": false,
+28        "fieldLevel": { "sensitiveFields": ["view|edit|hide"] }
+29      },
+30      "isActive": true,
+31      "createdAt": "ISO"
+32    }
+33  ],
+34  "companies": [
+35    {
+36      "id": "uuid",
+37      "name": "Acme Inc",
+38      "legalName": "Acme Incorporated",
+39      "taxId": "12-3456789",
+40      "baseCurrency": "USD",
+41      "fiscalYearStart": "01-01",
+42      "address": { "street": "", "city": "", "state": "", "zip": "", "country": "" },
+43      "phone": "",
+44      "email": "",
+45      "logo": "base64",
+46      "website": "",
+47      "defaultInvoiceTerms": "Net 30",
+48      "defaultTaxRateId": null,
+49      "industry": "",
+50      "isActive": true,
+51      "createdAt": "ISO",
+52      "closedPeriods": [
+53        { "year": 2023, "month": 12, "closedBy": "uuid", "closedAt": "ISO", "passwordHash": "..." }
+54      ],
+55      "customFieldsMeta": [
+56        { "id": "uuid", "entityType": "transaction", "name": "Project Code", "type": "text", "options": [] }
+57      ]
+58    }
+59  ],
+60  "currencies": [
+61    { "id": "uuid", "companyId": "uuid", "code": "EUR", "name": "Euro", "symbol": "€", "rateToBase": 0.92, "lastUpdated": "ISO", "isActive": true }
+62  ],
+63  "accounts": [
+64    {
+65      "id": "uuid", "companyId": "uuid", "code": "1200", "name": "Accounts Receivable",
+66      "type": "Asset|Liability|Equity|Income|COGS|Expense",
+67      "subType": "Current|Fixed|Bank|CreditCard|LongTerm|...",
+68      "parentId": null,
+69      "level": 1,
+70      "isBank": false,
+71      "bankDetails": { "institution": "", "accountNumber": "", "routing": "" },
+72      "currency": "USD",
+73      "openingBalance": 0.00,
+74      "openingBalanceDate": "2023-01-01",
+75      "currentBalance": 0.00,
+76      "isActive": true,
+77      "isSystem": false,
+78      "taxLine": "",
+79      "description": "",
+80      "createdAt": "ISO"
+81    }
+82  ],
+83  "bankAccounts": [
+84    {
+85      "id": "uuid", "companyId": "uuid", "accountId": "uuid", // links to chart of accounts
+86      "name": "Chase Checking", "institution": "Chase", "accountNumberMasked": "****1234",
+87      "type": "Checking|Savings|CreditCard|Cash|Loan|Investment",
+88      "currency": "USD", "openingBalance": 1000.00, "openingBalanceDate": "2023-01-01",
+89      "currentBalance": 0.00, "lastReconciledDate": null, "lastReconciledBalance": null,
+90      "importFormat": "CSV|OFX|QFX", "isActive": true
+91    }
+92  ],
+93  "transactions": [
+94    {
+95      "id": "uuid", "companyId": "uuid",
+96      "type": "income|expense|transfer|journal|invoice_payment|bill_payment|adjustment|payroll|fx_reval",
+97      "date": "2024-01-15", "description": "Office Supplies",
+98      "reference": "CHK-1024", "memo": "",
+99      "contactId": null, "projectId": null, "classId": null, "locationId": null,
+100      "isBillable": false, "billableStatus": "not_billable|has_been_billed|billable",
+101      "attachmentIds": [],
+102      "cleared": false, "clearedDate": null,
+103      "reconciled": false, "reconciliationId": null,
+104      "recurringId": null,
+105      "isReversal": false, "reversedById": null, "reversesId": null,
+106      "status": "posted|pending|void",
+107      "source": "manual|import|bank_rule|recurring|invoice|bill|payroll|system",
+108      "createdBy": "uuid", "createdAt": "ISO", "updatedAt": "ISO",
+109      "tags": ["tag1"],
+110      "customFieldValues": { "customFieldId": "value" }
+111    }
+112  ],
+113  "journalLines": [
+114    {
+115      "id": "uuid", "transactionId": "uuid",
+116      "accountId": "uuid", "debit": 0.00, "credit": 0.00,
+117      "description": "Line item detail", "currency": "USD", "fxRate": 1, "fxAmount": 0.00,
+118      "isCustomerAccount": false, "isVendorAccount": false,
+119      "contactId": null, "taxRateId": null, "taxAmount": 0.00,
+120      "classId": null, "locationId": null
+121    }
+122  ],
+123  "contacts": [
+124    {
+125      "id": "uuid", "companyId": "uuid",
+126      "type": "Customer|Vendor|Both|Employee|Other",
+127      "name": "Acme Client", "companyName": "",
+128      "salutation": "", "firstName": "", "lastName": "",
+129      "email": "", "phone": "", "mobile": "", "fax": "",
+130      "website": "",
+131      "billingAddress": { "street": "", "city": "", "state": "", "zip": "", "country": "" },
+132      "shippingAddress": { "street": "", "city": "", "state": "", "zip": "", "country": "" },
+133      "taxId": "", "paymentTerms": "Net 30", "taxRateId": null,
+134      "openingBalance": 0.00, "openingBalanceDate": null,
+135      "currency": "USD", "creditLimit": 0.00,
+136      "is1099Eligible": false,
+137      "notes": "", "isActive": true,
+138      "createdAt": "ISO", "customFieldValues": {}
+139    }
+140  ],
+141  "products": [
+142    {
+143      "id": "uuid", "companyId": "uuid",
+144      "type": "Product|Service|Inventory|NonInventory|Bundle",
+145      "name": "", "sku": "", "barcode": "",
+146      "description": "", "isActive": true,
+147      "salesPrice": 0.00, "costPrice": 0.00,
+148      "salesAccountId": null, "cogsAccountId": null, "inventoryAccountId": null,
+149      "taxRateId": null,
+150      "quantityOnHand": 0, "quantityOnOrder": 0, "quantityAvailable": 0,
+151      "reorderPoint": 0, "reorderQty": 0,
+152      "unitOfMeasure": "ea", "weight": 0, "weightUnit": "lb",
+153      "isPurchased": true, "isSold": true,
+154      "trackQuantity": true,
+155      "warehouses": [
+156        { "warehouseId": "uuid", "qty": 0, "bin": "" }
+157      ],
+158      "costingMethod": "FIFO|Average|LIFO|Standard",
+159      "bom": { "components": [{ "productId": "uuid", "qty": 1 }] },
+160      "isActive": true, "createdAt": "ISO"
+161    }
+162  ],
+163  "warehouses": [
+164    { "id": "uuid", "companyId": "uuid", "name": "Main Warehouse", "address": {}, "isActive": true }
+165  ],
+166  "invoices": [
+167    {
+168      "id": "uuid", "companyId": "uuid", "invoiceNumber": "INV-1001",
+169      "customerId": "uuid", "contactAddressSnapshot": {},
+170      "date": "2024-01-01", "dueDate": "2024-02-01",
+171      "status": "Draft|Sent|Viewed|PartiallyPaid|Paid|Overdue|Void|WrittenOff",
+172      "poNumber": "", "terms": "Net 30",
+173      "subtotal": 0.00, "discountTotal": 0.00, "taxTotal": 0.00,
+174      "shipping": 0.00, "total": 0.00, "amountPaid": 0.00, "balanceDue": 0.00,
+175      "lineItems": [
+176        {
+177          "id": "uuid", "productId": null, "description": "", "qty": 1,
+178          "rate": 0.00, "amount": 0.00, "discountPercent": 0,
+179          "accountId": null, "taxRateId": null, "taxAmount": 0.00,
+180          "classId": null, "locationId": null, "isBillable": false
+181        }
+182      ],
+183      "payments": [{ "transactionId": "uuid", "amount": 0.00, "date": "ISO" }],
+184      "notes": "", "footer": "", "termsAndConditions": "",
+185      "template": "modern", "isRecurring": false, "recurringId": null,
+186      "sentAt": null, "paidAt": null, "createdBy": "uuid", "createdAt": "ISO"
+187    }
+188  ],
+189  "bills": [
+190    {
+191      "id": "uuid", "companyId": "uuid", "billNumber": "BILL-500",
+192      "vendorId": "uuid", "date": "2024-01-01", "dueDate": "2024-02-01",
+193      "status": "Unpaid|PartiallyPaid|Paid|Overdue|Void",
+194      "amount": 0.00, "amountPaid": 0.00, "balanceDue": 0.00,
+195      "lineItems": [...], // similar to invoice
+196      "payments": [...],
+197      "purchaseOrderIds": [],
+198      "isRecurring": false, "createdAt": "ISO"
+199    }
+200  ],
+201  "purchaseOrders": [
+202    {
+203      "id": "uuid", "companyId": "uuid", "poNumber": "PO-200",
+204      "vendorId": "uuid", "date": "2024-01-01", "expectedDate": "2024-02-01",
+205      "status": "Draft|Sent|PartiallyReceived|Received|Closed|Cancelled",
+206      "lineItems": [...],
+207      "receivedQty": [], "billedQty": []
+208    }
+209  ],
+210  "salesOrders": [
+211    {
+212      "id": "uuid", "companyId": "uuid", "soNumber": "SO-300",
+213      "customerId": "uuid", "date": "2024-01-01", "shipDate": "2024-01-05",
+214      "status": "Draft|Confirmed|Picked|Shipped|Invoiced|Closed|Cancelled",
+215      "lineItems": [...],
+216      "fulfilledQty": []
+217    }
+218  ],
+219  "inventoryAdjustments": [
+220    {
+221      "id": "uuid",
+
+continue
+Copy message
+Edit message
+
+
+Thought for a moment
+json
+
+Copy code
+1      "companyId": "uuid", "productId": "uuid", "warehouseId": "uuid",
+2      "date": "2024-01-01", "type": "count|shrinkage|damage|received|transfer_in|transfer_out|assembly_build|assembly_unbuild",
+3      "qtyChange": 0, "unitCost": 0.00, "totalValue": 0.00,
+4      "reason": "", "transactionId": "uuid", "createdAt": "ISO"
+5    }
+6  ],
+7  "bankRules": [
+8    {
+9      "id": "uuid", "companyId": "uuid", "name": "Amazon AWS",
+10      "priority": 10, "isActive": true,
+11      "conditions": {
+12        "matchType": "all|any",
+13        "rules": [
+14          { "field": "description|amount|reference|payee|bankAccount", "operator": "contains|starts_with|ends_with|equals|greater_than|less_than|between|regex", "value": "AMAZON WEB SERVICES", "caseSensitive": false }
+15        ]
+16      },
+17      "actions": {
+18        "accountId": "uuid", "categoryId": null, "classId": null,
+19        "projectId": null, "taxRateId": null, "tags": ["Cloud"],
+20        "isBillable": false, "setCleared": true, "memo": "AWS Subscription"
+21      },
+22      "applyTo": "all|income|expense|transfer", "lastApplied": "ISO"
+23    }
+24  ],
+25  "recurringTransactions": [
+26    {
+27      "id": "uuid", "companyId": "uuid", "name": "Monthly Rent",
+28      "type": "expense|income|transfer|journal|invoice|bill",
+29      "frequency": "daily|weekly|biweekly|monthly|quarterly|yearly",
+30      "interval": 1, "startDate": "2024-01-01", "endDate": null, "maxOccurrences": null,
+31      "nextDate": "2024-02-01", "lastGenerated": "ISO",
+32      "templateData": { /* mirror of transaction/invoice/bill fields */ },
+33      "isActive": true
+34    }
+35  ],
+36  "budgets": [
+37    {
+38      "id": "uuid", "companyId": "uuid", "name": "FY2024 Budget",
+39      "fiscalYear": 2024, "interval": "monthly|quarterly|yearly",
+40      "lines": [
+41        { "accountId": "uuid", "period1": 1000.00, "period2": 1000.00, ... }
+42      ],
+43      "isActive": true
+44    }
+45  ],
+46  "fixedAssets": [
+47    {
+48      "id": "uuid", "companyId": "uuid", "name": "Server Rack",
+49      "assetAccountId": "uuid", "accumDepreciationAccountId": "uuid", "expenseAccountId": "uuid",
+50      "purchaseDate": "2023-01-01", "purchasePrice": 5000.00,
+51      "salvageValue": 500.00, "usefulLifeYears": 5,
+52      "depreciationMethod": "straight_line|declining_balance|sum_of_years",
+53      "currentAccumulatedDepreciation": 900.00, "netBookValue": 4100.00,
+54      "status": "active|fully_depreciated|sold|disposed",
+55      "disposalDate": null, "disposalProceeds": 0.00,
+56      "attachments": []
+57    }
+58  ],
+59  "taxRates": [
+60    {
+61      "id": "uuid", "companyId": "uuid", "name": "Sales Tax 8.25%",
+62      "rate": 8.25, "type": "Sales|VAT|GST|Use|Withholding",
+63      "agency": "State Board", "isCompound": false,
+64      "isActive": true
+65    }
+66  ],
+67  "projects": [
+68    {
+69      "id": "uuid", "companyId": "uuid", "name": "Website Redesign",
+70      "description": "", "status": "active|completed|on_hold|cancelled",
+71      "customerId": null, "managerId": null, // user id
+72      "startDate": "2024-01-01", "endDate": "2024-06-01",
+73      "budgetHours": 100, "budgetCost": 10000.00,
+74      "billingRate": 150.00, "isBillable": true,
+75      "incomeAccountId": null, "expenseAccountId": null,
+76      "createdAt": "ISO"
+77    }
+78  ],
+79  "tasks": [
+80    {
+81      "id": "uuid", "companyId": "uuid", "projectId": "uuid",
+82      "name": "Design Mockups", "assignedTo": "uuid",
+83      "status": "not_started|in_progress|review|completed",
+84      "estimatedHours": 10, "actualHours": 0,
+85      "dueDate": "2024-02-01", "completedAt": null
+86    }
+87  ],
+88  "timesheets": [
+89    {
+90      "id": "uuid", "companyId": "uuid", "userId": "uuid",
+91      "projectId": "uuid", "taskId": null,
+92      "date": "2024-01-15", "durationMinutes": 120,
+93      "description": "Client meeting", "isBillable": true,
+94      "billingStatus": "unbilled|billed|non_billable",
+95      "invoiceId": null, "hourlyRate": 150.00
+96    }
+97  ],
+98  "employees": [
+99    {
+100      "id": "uuid", "companyId": "uuid", "contactId": "uuid",
+101      "employeeNumber": "EMP-001", "hireDate": "2020-01-01",
+102      "jobTitle": "Senior Developer", "department": "Engineering",
+103      "payType": "salary|hourly|commission",
+104      "payAmount": 75000.00, "payFrequency": "biweekly",
+105      "taxWithholding": { "federal": 0.12, "state": 0.05, "other": 0.00 },
+106      "deductions": [{ "name": "401k", "amount": 200.00, "type": "fixed|percent" }],
+107      "expenseAccountId": null, "liabilityAccountId": null,
+108      "isActive": true
+109    }
+110  ],
+111  "payRuns": [
+112    {
+113      "id": "uuid", "companyId": "uuid", "periodStart": "2024-01-01", "periodEnd": "2024-01-15",
+114      "payDate": "2024-01-20", "status": "draft|processed|paid",
+115      "lines": [
+116        { "employeeId": "uuid", "grossPay": 2884.62, "taxTotal": 800.00, "deductionTotal": 200.00, "netPay": 1884.62 }
+117      ],
+118      "totalGross": 0.00, "totalTax": 0.00, "totalNet": 0.00,
+119      "transactionId": null
+120    }
+121  ],
+122  "expenseClaims": [
+123    {
+124      "id": "uuid", "companyId": "uuid", "employeeId": "uuid",
+125      "date": "2024-01-10", "description": "Hotel",
+126      "amount": 250.00, "currency": "USD", "fxRate": 1,
+127      "categoryId": "uuid", "receiptAttachmentId": "uuid",
+128      "status": "pending|approved|rejected|reimbursed",
+129      "approvedBy": null, "approvedAt": null,
+130      "reimbursementTransactionId": null
+131    }
+132  ],
+133  "loans": [
+134    {
+135      "id": "uuid", "companyId": "uuid", "name": "Equipment Loan",
+136      "lenderId": null, "principal": 50000.00, "interestRate": 5.5,
+137      "termMonths": 60, "startDate": "2023-01-01",
+138      "liabilityAccountId": "uuid", "interestExpenseAccountId": "uuid",
+139      "paymentAmount": 955.00, "remainingPrincipal": 42000.00,
+140      "isActive": true
+141    }
+142  ],
+143  "attachments": [
+144    {
+145      "id": "uuid", "companyId": "uuid",
+146      "recordType": "transaction|invoice|bill|contact|product|fixedAsset|expenseClaim",
+147      "recordId": "uuid", "fileName": "receipt.jpg",
+148      "fileType": "image/jpeg|application/pdf",
+149      "sizeBytes": 204800, "dataBase64": "...",
+150      "thumbnailBase64": "...", // for images, 150x150
+151      "uploadedBy": "uuid", "uploadedAt": "ISO"
+152    }
+153  ],
+154  "auditLog": [
+155    {
+156      "id": "uuid", "companyId": "uuid", "userId": "uuid",
+157      "action": "create|update|delete|login|logout|export|import|reconcile|close_period|void",
+158      "entityType": "transaction|invoice|bill|contact|...",
+159      "entityId": "uuid", "changes": { "before": {}, "after": {} },
+160      "ipAddress": "127.0.0.1", "userAgent": "", "timestamp": "ISO"
+161    }
+162  ],
+163  "comments": [
+164    {
+165      "id": "uuid", "companyId": "uuid", "userId": "uuid",
+166      "entityType": "transaction|invoice|...",
+167      "entityId": "uuid", "parentId": null,
+168      "content": "Please review the FX rate.",
+169      "mentions": ["uuid"],
+170      "isSystem": false, "createdAt": "ISO", "updatedAt": "ISO"
+171    }
+172  ],
+173  "bankReconciliations": [
+174    {
+175      "id": "uuid", "companyId": "uuid", "bankAccountId": "uuid",
+176      "statementDate": "2024-01-31", "statementEndingBalance": 15000.00,
+177      "clearedBalance": 14950.00, "difference": 50.00,
+178      "isReconciled": false,
+179      "clearedTransactionIds": ["uuid", "uuid"],
+180      "adjustmentTransactionId": null,
+181      "createdBy": "uuid", "createdAt": "ISO"
+182    }
+183  ],
+184  "classes": [
+185    { "id": "uuid", "companyId": "uuid", "name": "Department A", "isActive": true }
+186  ],
+187  "locations": [
+188    { "id": "uuid", "companyId": "uuid", "name": "Store 1 - Downtown", "isActive": true }
+189  ],
+190  "priceLevels": [
+191    { "id": "uuid", "companyId": "uuid", "name": "Wholesale", "discountPercent": 15 }
+192  ],
+193  "workflows": [
+194    {
+195      "id": "uuid", "companyId": "uuid", "name": "Late Invoice Reminder",
+196      "trigger": { "type": "invoice_overdue", "delayDays": 1 },
+197      "conditions": [{ "field": "total", "operator": "greater_than", "value": 100 }],
+198      "actions": [{ "type": "send_notification", "template": "..." }],
+199      "isActive": true
+200    }
+201  ],
+202  "exchangeRates": [
+203    { "id": "uuid", "companyId": "uuid", "from": "EUR", "to": "USD", "rate": 1.08, "date": "2024-01-15" }
+204  ],
+205  "retainers": [
+206    {
+207      "id": "uuid", "companyId": "uuid", "customerId": "uuid",
+208      "trustAccountId": "uuid", "balance": 5000.00,
+209      "initialAmount": 10000.00, "isActive": true
+210    }
+211  ]
+212}
+4. SEARCHABLE DROPDOWN IMPLEMENTATION SPEC (MANDATORY)
+
+Implement a SearchableDropdown class/function used universally. Here is the exact behavior:
+
+Structure
+
+html
+
+Copy code
+1<div class="sd-container" data-multiple="false">
+2  <button class="sd-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+3    <span class="sd-selection">Select Account</span>
+4    <svg class="sd-chevron" width="16" height="16">...</svg>
+5  </button>
+6  <div class="sd-dropdown" role="listbox" hidden>
+7    <div class="sd-search-wrapper">
+8      <svg class="sd-search-icon" width="16" height="16">...</svg>
+9      <input type="text" class="sd-search" placeholder="Search..." autocomplete="off">
+10      <button class="sd-clear" hidden>×</button>
+11    </div>
+12    <div class="sd-section sd-recent" hidden>
+13      <div class="sd-section-title">Recent</div>
+14      <!-- recent items -->
+15    </div>
+16    <div class="sd-options">
+17      <!-- virtual scroll container -->
+18    </div>
+19    <div class="sd-footer" hidden>
+20      <button class="sd-create-new">+ Create "<span class="sd-query"></span>"</button>
+21    </div>
+22    <div class="sd-empty" hidden>No matches found</div>
+23  </div>
+24</div>
+CSS Spec
+
+Trigger: min-height: 44px, padding: 8px 32px 8px 12px, border: 1px solid var(--border-default), radius-md, bg-surface, text-left, position: relative.
+Chevron: position: absolute; right: 12px; top: 50%; transform: translateY(-50%); transition: transform 0.2s. Rotate 180° when open.
+Dropdown: position: absolute; z-index: var(--z-popover); top: calc(100% + 4px); left: 0; min-width: 100%; max-height: 320px; overflow-y: auto; bg-surface; border: 1px solid var(--border-default); radius-lg; shadow-lg.
+Search wrapper: sticky top-0 bg-surface border-bottom: 1px solid var(--border-subtle); padding: 8px; display: flex; align-items: center; gap: 8px.
+Search input: flex: 1; border: none; background: transparent; outline: none; font-size: 14px.
+Option row: padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 40px.
+Option hover/highlight: bg-hover. Selected: bg-active + checkmark icon.
+Group header: padding: 6px 12px; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; position: sticky; top: 48px; bg-surface; border-bottom: 1px solid var(--border-subtle).
+Mobile: Transform dropdown into a full bottom sheet when viewport < 640px. Sheet title is the field label.
+Interaction Logic
+
+Open: On trigger click. Focus search input immediately (use requestAnimationFrame).
+Search: Debounce 50ms. Filter options by fuzzy matching:
+Tokenize query by whitespace.
+For each option text, lowercase both.
+Score: +10 if text starts with query, +5 if word starts with query token, +2 if contains query token.
+Sort by score desc, then alphabetically.
+Highlight matching characters with <mark> tag styled background: transparent; color: var(--accent-primary); font-weight: 600.
+Keyboard:
+ArrowDown: If closed, open. If open, move highlight index +1, scroll into view.
+ArrowUp: Move highlight -1.
+Enter: Select highlighted option; close; focus trigger.
+Escape: Close, return focus to trigger, restore original value.
+Tab: Close, accept current highlighted if any, else keep existing.
+Typing while focused on trigger opens dropdown and filters (typeahead).
+Virtual Scroll: If options > 50, only render 20 items at a time based on scroll position. Use transform: translateY() on a spacer to maintain scroll height.
+Multi-select: Selected items appear as removable chips inside trigger: display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; bg-active; radius-sm; font-size: 13px. Chip remove button is × with padding: 2px.
+Usage Contract
+
+Every form must use this component for:
+
+Account selection (Chart of Accounts)
+Customer/Vendor selection
+Product selection
+Currency selection
+Tax rate selection
+Project selection
+Class/Location selection
+Employee/User selection
+Bank account selection
+Parent account selection
+5. STORAGE, PERFORMANCE & OFFLINE ARCHITECTURE
+
+5.1 Storage Strategy
+
+Primary: localStorage for active company data (fast reads).
+Overflow: If data exceeds 5MB, shard into localStorage keys by entity type (omnibook_accounts, omnibook_transactions, etc.) using a manifest key omnibook_manifest that tracks all keys.
+Large Payloads: Base64 attachments and audit logs go into IndexedDB via a lightweight promise wrapper (openDB, get, put, delete). Use object stores: attachments, auditLogs, exports.
+External File: On boot, attempt fetch('./data.json'). If success, hydrate state. If fail, use localStorage/IndexedDB. Provide a prominent "Sync to File" button in settings that serializes everything to a Blob and triggers download.
+5.2 Performance Requirements
+
+Target: First contentful paint < 1.5s on mid‑range mobile.
+Bundle: Since everything is inline, minify all CSS and JS (no external HTTP requests except the optional data.json).
+List Virtualization: Any list with >100 items (transactions, products, audit log) must use virtual scrolling.
+Lazy Loading: Load report data only when tab is activated. Preload dashboard only.
+Computed Caching: Cache currentBalance per account, contactBalance, inventoryValue in a computedCache object keyed by entityId + dirtyTimestamp. Invalidate on relevant mutations.
+Debounced Saves: Batch rapid changes (e.g., inline editing) into a 1‑second debounce before writing to storage.
+Memory Management: Implement a dispose() pattern for modals/bottom sheets to remove event listeners and DOM nodes.
+5.3 Service Worker / PWA
+
+Inline a service worker script (registered via navigator.serviceWorker.register(blobURL)) that caches the index.html shell and intercepts fetch requests to serve from cache when offline.
+Offline page: Show a banner "Working Offline — Changes will sync when reconnected".
+Background sync simulation: Queue save operations; when online, replay them.
+6. MOBILE-FIRST NAVIGATION & LAYOUT
+
+6.1 Breakpoint Behaviors
+Feature
+Mobile (0-639px)
+Tablet (640-1023px)
+Desktop (1024px+)
+Nav
+Bottom tab bar (64px height)
+Collapsible side rail (72px)
+Persistent sidebar (260px)
+Lists
+Cards with swipe actions
+Hybrid cards/table
+Full data tables
+Forms
+Bottom sheet
+Modal
+Side panel (480px slide-over)
+FAB
+56px circle, bottom-right, 24px margin
+Same
+Optional top-bar button
+Search
+Collapses to icon, expands full-width
+Persistent field
+Persistent field + filters
+6.2 Bottom Tab Bar (Mobile)
+
+Height: 64px including safe area inset.
+5 tabs: Dashboard, Transactions, Invoicing, Banking, More (overflow menu).
+Active state: Icon stroke → fill, color accent-primary, label font-weight: 600.
+Inactive: color: var(--text-tertiary).
+Tap feedback: scale(0.92) + bg-hover.
+Badge support: Red dot (8px) with white border (2px) on tab icon for pending notifications.
+6.3 Floating Action Button (FAB)
+
+Primary FAB: 56px circle, bg-accent-primary, white icon, shadow-lg, fixed bottom: 84px; right: 20px (above bottom nav).
+Tap opens a radial/bottom-sheet menu:
+Add Expense
+Add Income
+Transfer
+New Invoice
+New Bill
+Capture Receipt
+Menu items animate in with staggered translateY (0 → -10px) and opacity (0 → 1), 60ms delay each.
+6.4 Swipe Gestures
+
+On transaction/invoice/bill list items:
+Swipe left: Reveals Edit (blue, 80px) and Delete (red, 80px).
+Swipe right: Reveals Duplicate (gray, 80px) and More (…).
+Swipe > 40% width triggers haptic-like vibration pattern (if supported) or visual snap.
+Release snaps to nearest action or closes.
+On mobile tables: Horizontal scroll with sticky first column (description or name).
+6.5 Pull to Refresh
+
+Implemented on Dashboard and Transaction list.
+Pull down > 80px triggers refresh icon rotation.
+Re-hydrates computed caches and re-renders.
+7. SECURITY, ACCESSIBILITY & POLISH
+
+7.1 Simulated Security
+
+Hashing: Use crypto.subtle.digest('SHA-256') with a per-user salt stored in the user record. For simulation speed, you may use a simplified HMAC.
+Session: sessionStorage token (random 32‑char string) validated on every route change. Expires after 8 hours of inactivity.
+PIN Lock: If enabled, blur the entire app with an overlay <div class="pin-overlay"> requiring 4‑6 digit PIN to dismiss. PIN is SHA‑256 hashed.
+Brute force: After 5 failed login attempts, enforce a 30‑second lockout (timestamp in localStorage).
+Field‑level permissions: If Viewer role, render inputs as disabled with opacity: 0.7 and no edit buttons. If Bookkeeper, hide "Delete Company" and "Manage Users" menu items entirely.
+Sensitive data masking: Optionally mask bank account numbers, SSN/Tax ID in UI (***-**-1234) unless user clicks reveal.
+7.2 Accessibility (WCAG 2.1 AA)
+
+Focus management: Trap focus inside modals/bottom sheets (cycle Tab through focusable elements). Return focus to trigger on close.
+ARIA: All custom components must have correct roles:
+Dropdown: role="combobox", aria-expanded, aria-controls, aria-activedescendant.
+Tables: role="table", row, cell, columnheader. Sortable headers announce state via aria-sort.
+Alerts: Live regions (aria-live="polite") for toast notifications.
+Screen reader: All icons must have aria-hidden="true" + accompanying text or aria-label. Currency amounts read as "$1,234.56" not "1234.56".
+Keyboard: Every action reachable without mouse. Skip to main content link on first Tab.
+Color contrast: All text meets 4.5:1 ratio. Do not rely on color alone for status — use icons + text.
+Motion: Respect prefers-reduced-motion — disable animations, use instant transitions.
+7.3 Dark Mode
+
+Toggle in settings or via Ctrl+Shift+D.
+Use data-theme="dark" on <html> and CSS variables that swap.
+Images/attachments: Add subtle brightness(0.95) in dark mode to reduce eye strain.
+Charts: Adjust grid lines to rgba(255,255,255,0.1), text to dm-text-secondary.
+7.4 Micro‑interactions
+
+Buttons: transition: all 0.15s ease.
+Modals: Enter opacity 0→1, scale(0.96)→1, duration 200ms, easing cubic-bezier(0.16,1,0.3,1). Exit reverse, 150ms.
+Bottom sheets: Enter translateY(100%)→0, exit reverse. Backdrop fades.
+Toasts: Enter translateY(100%)→0, opacity 0→1, auto-dismiss with opacity→0, translateX(0→20px) after 4s. Pause on hover.
+Page transitions: Fade content area opacity 0→1, duration 150ms on route change.
+Loading states: Skeleton screens (shimmer gradient animation) instead of spinners for initial loads. Inline spinners (CSS border-top-color rotation) for buttons.
+Empty states: Centered illustration (inline SVG), title text-lg font-semibold, subtitle text-secondary, and a clear CTA button.
+8. REPORTING ENGINE DEEP SPEC
+
+8.1 Report Framework
+
+Every report uses a unified ReportEngine class:
+
+Inputs: Date range (preset: This Month, Last Month, This Quarter, YTD, Last Year, Custom), Comparison period toggle, Currency filter, Class/Location filter, Customer/Vendor filter.
+Output: Header (title, date generated, company name), summary cards (top 3 KPIs), data table, optional chart.
+Actions: Print (styled @media print hides chrome), Export CSV (Blob download), Export PDF (trigger window.print() after injecting print-specific CSS), Save to Favorites.
+8.2 Visualizations Per Report
+Report
+Chart Type
+Drill-down
+P&L
+Line (trend) + Bar (comparison)
+Click month → transactions
+Balance Sheet
+Stacked bar (Assets vs Liab)
+Click account → ledger
+Cash Flow
+Sankey-style flow (simplified stacked bars)
+Click category → transactions
+AR Aging
+Horizontal stacked bar (buckets)
+Click bucket → invoices
+AP Aging
+Horizontal stacked bar
+Click bucket → bills
+Budget vs Actual
+Combo: Bar actual, Line budget
+Click variance → transactions
+Sales by Customer
+Donut (top 10) + table
+Click slice → customer statement
+Expense by Category
+Treemap (if >10 categories) or Bar
+Click tile → transactions
+Inventory Valuation
+Table + sparkline (qty trend)
+Click item → adjustments
+Project Profitability
+Bar (income vs expense per project)
+Click project → detail
+8.3 Print & PDF Styling
+
+css
+
+Copy code
+1@media print {
+2  body * { visibility: hidden; }
+3  .report-container, .report-container * { visibility: visible; }
+4  .report-container { position: absolute; left: 0; top: 0; width: 100%; }
+5  .no-print { display: none !important; }
+6  /* Ensure background colors print */
+7  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+8}
+Report pages include a print header: logo, company name, report title, date range, page number (counter(page)).
+Use CSS page-break-inside: avoid on table rows.
+9. ONBOARDING & CONTEXTUAL HELP
+
+9.1 First‑Run Wizard
+
+Step 1: Welcome + language selection.
+Step 2: Create first company (name, industry, base currency, fiscal year).
+Step 3: Add first bank account (name, type, opening balance).
+Step 4: Import chart of accounts (choose preset: US GAAP, UK GAAP, Minimal, or Blank).
+Step 5: Optionally import sample data (demo transactions) to help user learn.
+Step 6: Invite team members (skip allowed).
+Progress indicator: top bar, 6 steps.
+9.2 Guided Tours
+
+Implement a TourEngine using absolute-positioned tooltips with arrows.
+Tours available:
+"Getting Started" (Dashboard walkthrough)
+"Your First Invoice"
+"Reconciling a Bank Account"
+"Running Reports"
+Tooltip styling: bg-surface, shadow-xl, radius-lg, padding: 16px, max-width 320px. Arrow is CSS border triangle. Backdrop is bg-overlay with pointer-events: none except on highlighted element (box-shadow: 0 0 0 9999px var(--bg-overlay)).
+Navigation: "Next", "Back", "Skip Tour".
+9.3 Contextual Help
+
+? icon buttons next to complex fields.
+Click opens a small popover with explanation and link to full help.
+Help content is inline HTML (no external fetches).
+10. FINAL CODING MANDATES FOR THE AI AGENT
+
+No External Dependencies: Everything must be contained in index.html. Inline all fonts as system font stack. Inline SVG icons (create a sprite sheet in a hidden <svg> block with <symbol> definitions, referenced via <use href="#icon-name">).
+No Frameworks: Pure vanilla JavaScript (ES2020+). No React, Vue, Angular, jQuery, Bootstrap, Tailwind CDN. You may replicate a utility CSS approach with ~200 lines of atomic classes if needed, but prefer semantic BEM-style classes.
+State Management: Use a single global AppState object with Proxy or explicit getter/setter methods that trigger render() debounces. Example: AppState.set('activeCompany', id) → persists → updates UI.
+Routing: Hash-based routing (#/dashboard, #/transactions, #/reports/profit-loss). popstate listener updates the main view without page reload.
+Rendering: Use a lightweight html tagged template literal function that sanitizes inputs (escape HTML). Batch DOM updates using DocumentFragment.
+Date Handling: Use native Date with helper wrappers. Implement formatDate(), parseDate(), addDays(), startOfMonth(), etc. Respect user's dateFormat setting.
+Number/Currency: Use Intl.NumberFormat with locale detection. For input fields, allow only digits, one decimal separator, and two decimal places. Display negative numbers in parentheses for accounting: (1,234.56).
+Form Validation: Every form must validate before submit. Show inline errors below fields in accent-danger color. Shake animation (translateX keyframes) on submit if invalid.
+Undo/Redo: Maintain an actionStack (max 50 deep) with inverse operations. Ctrl+Z / Ctrl+Shift+Z support.
+Error Boundaries: Wrap all render calls in try/catch. If error, show a fallback UI: "Something went wrong" with "Reload App" button and error details in a collapsible <pre>.
+Mobile Performance: Use touch-action: manipulation on buttons. Use passive: true on scroll listeners. Avoid setState on every scroll event; throttle to 100ms.
+Testing Data: Include a generateSampleData() function that populates realistic 2-year transactional history, 20 customers, 15 vendors, 50 products, and 3 bank accounts. This is essential for the demo feel.
+11. MASTER FEATURE CHECKLIST (VERIFY BEFORE FINISHING)
+
+Before declaring complete, verify every one of these works:
+
+Authentication & Multi‑User
+
+[ ] Login screen with username/password
+[ ] Password hashing with salt
+[ ] Role-based access (Owner/Admin/Bookkeeper/Viewer/Sales/Manager)
+[ ] Session timeout after 8 hours
+[ ] Optional PIN lock
+[ ] User management screen (Admin/Owner only)
+Multi‑Company
+
+[ ] Create / edit / switch / copy / delete companies
+[ ] Per-company data isolation
+[ ] Consolidated P&L and Balance Sheet across companies
+[ ] Inter-company journal entries
+Banking
+
+[ ] Add unlimited bank/credit card accounts
+[ ] Opening balance + date
+[ ] Auto-calculated current balance
+[ ] Multi-currency per account
+[ ] Reconciliation wizard (statement date, ending balance, check off items, difference calculation)
+[ ] Mark as cleared / reconciled
+[ ] Bank rules engine with conditions and actions
+[ ] CSV import with column mapping, preview, duplicate detection, auto-categorization
+[ ] OFX/QFX parser (basic tag extraction)
+[ ] Export transactions
+Chart of Accounts
+
+[ ] 5-level hierarchy (Assets, Liabilities, Equity, Income, COGS, Expenses)
+[ ] Sub-accounts up to 3 levels deep
+[ ] Account codes (numeric, sortable)
+[ ] Opening balance + date
+[ ] Active/inactive toggle
+[ ] Account history / running balance ledger
+[ ] Default presets (US GAAP, Minimal)
+Transactions & Journal
+
+[ ] Income, Expense, Transfer, Journal Entry forms
+[ ] Split transactions (multiple lines)
+[ ] Attachments (base64 image/PDF with size warning >5MB)
+[ ] Recurring scheduler (daily/weekly/monthly/yearly)
+[ ] Bulk edit / bulk delete
+[ ] Search & filter (date, account, amount range, description, status, tags, project, class, location)
+[ ] Saved filters
+[ ] Undo / redo (last 10)
+[ ] Audit log with before/after
+[ ] Duplicate detection
+[ ] Inline editing in lists
+[ ] Custom fields
+Contacts
+
+[ ] Unified customer/vendor/employee contact
+[ ] Billing & shipping addresses
+[ ] Opening balance
+[ ] Contact statement (activity for period)
+[ ] 1099/WTax eligibility flag
+[ ] Credit limit
+[ ] Contact groups
+Products & Inventory
+
+[ ] Product / Service / Inventory / Bundle / Non-inventory
+[ ] SKU, barcode, UOM
+[ ] Sales price, cost price
+[ ] Quantity on hand, reorder point
+[ ] Multi-warehouse tracking
+[ ] Transfer orders
+[ ] Inventory adjustments with reasons
+[ ] FIFO / Average / LIFO / Standard costing
+[ ] Assembly / BOM builds
+[ ] Landed costs
+[ ] Physical count worksheet
+[ ] Low stock alerts
+Invoicing (AR)
+
+[ ] Invoice creation with line items
+[ ] Auto-numbering or manual
+[ ] Tax per line, discounts, shipping
+[ ] Status workflow: Draft → Sent → Viewed → Partially Paid → Paid → Overdue → Void
+[ ] Record payment (auto-transaction)
+[ ] Recurring invoices
+[ ] Credit notes / write-offs
+[ ] Customer statements
+[ ] Invoice aging (0-30, 31-60, 61-90, 90+)
+[ ] 3 PDF templates (Modern, Classic, Minimalist)
+[ ] Print / email simulation
+[ ] POS mode
+Bills (AP)
+
+[ ] Vendor bill entry
+[ ] Recurring bills
+[ ] Payment recording
+[ ] Vendor credits
+[ ] AP aging
+[ ] Purchase order → Bill workflow
+[ ] 1099 tracking
+Advanced Accounting
+
+[ ] Journal entries (true double-entry)
+[ ] Debit/credit validation (must balance)
+[ ] Reversing entries
+[ ] Closing entries (revenue/expense → retained earnings)
+[ ] Period locking with password
+[ ] Fixed assets + depreciation (straight-line, declining balance)
+[ ] Loan amortization + auto-split payments
+[ ] Lease accounting (ROU asset/liability)
+[ ] Deferred revenue recognition schedule
+[ ] FX revaluation journals
+[ ] Accrual automation suggestions
+Payroll
+
+[ ] Employee records
+[ ] Pay run creation
+[ ] Gross, tax, deduction, net calculation
+[ ] Pay stub generation
+[ ] Payroll summary report
+Time & Projects
+
+[ ] Project creation with budget
+[ ] Task management
+[ ] Timer / timesheet
+[ ] Billable hours → invoice conversion
+[ ] Project profitability report
+Expenses
+
+[ ] Expense claims
+[ ] Receipt capture (camera/upload)
+[ ] Approval workflow
+[ ] Reimbursement batch
+Reports (All Exportable/Printable)
+
+[ ] P&L (monthly/quarterly/yearly with comparison)
+[ ] Balance Sheet
+[ ] Cash Flow (direct)
+[ ] Trial Balance
+[ ] General Ledger
+[ ] Account Activity
+[ ] Journal Report
+[ ] AR Aging (summary & detail)
+[ ] AP Aging (summary & detail)
+[ ] Sales by Customer / Product
+[ ] Expense by Vendor / Category
+[ ] Budget vs Actual
+[ ] Project Profitability
+[ ] Tax Summary / Liability
+[ ] Inventory Valuation
+[ ] Fixed Assets Schedule
+[ ] Payroll Summary
+[ ] Audit Trail
+[ ] Cash Flow Forecast
+[ ] Consolidated (multi-company)
+[ ] Custom Report Builder (select fields, filters, group by)
+Dashboard
+
+[ ] Cash balance cards
+[ ] P&L summary (MTD)
+[ ] Expense donut chart
+[ ] Overdue invoices & bills alert
+[ ] Low stock alerts
+[ ] Recent transactions
+[ ] Quick action buttons
+[ ] Customizable widget layout (drag to reorder on desktop)
+Budgeting
+
+[ ] Monthly budgets per account
+[ ] Budget vs Actual report
+[ ] Variance % and $
+[ ] Alerts at 80% and 100%
+Tax
+
+[ ] Multiple tax rates
+[ ] Tax on transactions and invoices
+[ ] Tax collected / tax paid report
+[ ] Tax liability by period
+[ ] Tax deductible expense flag
+Automation
+
+[ ] Bank rules with AND/OR conditions
+[ ] Rule testing / preview
+[ ] Batch apply rules
+[ ] Auto-categorization on import
+[ ] Workflow triggers & actions
+[ ] Recurring transaction engine
+Searchable Dropdowns (Universal)
+
+[ ] Implemented on ALL long lists (>5 items)
+[ ] Fuzzy search with highlight
+[ ] Recent selections
+[ ] Keyboard navigation
+[ ] Virtual scroll for >50 items
+[ ] Mobile full-screen variant
+UX & Navigation
+
+[ ] Mobile bottom tab bar
+[ ] Desktop sidebar navigation
+[ ] FAB with quick-add menu
+[ ] Swipe actions on mobile lists
+[ ] Pull to refresh
+[ ] Command palette (Ctrl+K)
+[ ] Global search (Ctrl+Shift+F)
+[ ] Keyboard shortcuts throughout
+[ ] Dark/light mode
+[ ] Mobile-first responsive design
+[ ] Accessibility: focus traps, ARIA labels, keyboard nav, screen reader support
+[ ] Onboarding wizard
+[ ] Guided tours
+[ ] Offline capability with service worker
+Data Management
+
+[ ] localStorage + IndexedDB persistence
+[ ] External data.json read on boot, export on save
+[ ] Full JSON backup/restore
+[ ] CSV import/export
+[ ] Auto-save every change
+[ ] Daily auto-backup option
+[ ] Data integrity diagnostics
+[ ] Orphan detection & repair
+Final Instruction: Build index.html and data.json with obsessive attention to spacing, alignment, color consistency, and interaction feedback. Every pixel should feel intentional. The app must load instantly, operate smoothly on a 3-year-old mid-range Android phone, and present a credible alternative to desktop accounting software. Do not leave any placeholder text, non-functional buttons, or "coming soon" labels. Every menu item must lead to a fully working screen.
